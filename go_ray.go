@@ -1,6 +1,11 @@
 package main
 
 import "math"
+import "fmt"
+import "image"
+import "os"
+import "image/color"
+import "image/png"
 
 // vector can represent a point as well, if interpreted as
 //  a vector from the origin to a point or 'absolute position vector'.
@@ -19,11 +24,12 @@ type camera struct {
 
 type screen struct {
 	w,h float64
-	xres, yres int32
+	xres, yres int
 }
 
 type scene struct {
-	i int32
+	center point
+	radius float64
 }
 
 func (v *vector) sub(v1 *vector) vector {
@@ -62,4 +68,24 @@ func (v1 *vector) cross(v2 *vector) vector {
 }
 
 func main() {
+	fmt.Println("hi")
+	g_screen := screen{100,100,1000,1000}
+
+	f, err := os.OpenFile("x.png", os.O_CREATE | os.O_WRONLY, 0666)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	m := image.NewRGBA(image.Rect(0,0,g_screen.xres,g_screen.yres))
+	
+	for i:=0; i < g_screen.xres; i++ {
+		for j:=0; j < g_screen.xres; j++ {
+			m.Set(i,j,color.RGBA{255,0,0,255})
+		}
+	}
+	if err=png.Encode(f,m); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 }
