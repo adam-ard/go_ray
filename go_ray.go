@@ -103,9 +103,29 @@ func main() {
 			e_to_Pij := Pij.sub(&g_camera.eye)
 
 			current_ray := ray{g_camera.eye, e_to_Pij.unit()}
-			fmt.Println(current_ray)
-
-			m.Set(i,j,color.RGBA{uint8(i%250*j%250),0,0,255})
+			
+			// put the sphere at the origin
+			xc := 0.0
+			yc := 0.0
+			zc := 0.0
+			r := 5.0
+			a := current_ray.direction.x * current_ray.direction.x +
+				current_ray.direction.y * current_ray.direction.y +
+				current_ray.direction.z * current_ray.direction.z
+			b := 2*((current_ray.start.x-xc)*current_ray.direction.x +
+				(current_ray.start.y-yc)*current_ray.direction.y +
+				(current_ray.start.z-zc)*current_ray.direction.z) 
+			c := (current_ray.start.x-xc) * (current_ray.start.x-xc) +
+				(current_ray.start.y-yc) * (current_ray.start.y-yc) +
+				(current_ray.start.z-zc) * (current_ray.start.z-zc) -
+				r * r
+				
+			// test with a sphere
+			if sphere_test:=b*b-4*a*c ; sphere_test > 0.0 {
+				m.Set(i,j,color.RGBA{255,0,0,255})
+			}else {
+				m.Set(i,j,color.RGBA{0,0,0,255})
+			}
 		}
 	}
 	if err=png.Encode(f,m); err != nil {
