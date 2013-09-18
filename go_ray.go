@@ -14,11 +14,14 @@ type vector struct {
 	x, y, z float64
 }
 
-type point vector
+type ray struct {
+	start vector
+	direction vector
+}
 
 type camera struct {
-	eye point
-	look_at point
+	eye vector
+	look_at vector
 	up vector
 }
 
@@ -28,7 +31,7 @@ type screen struct {
 }
 
 type scene struct {
-	center point
+	center vector
 	radius float64
 }
 
@@ -70,6 +73,7 @@ func (v1 *vector) cross(v2 *vector) vector {
 func main() {
 	fmt.Println("hi")
 	g_screen := screen{100,100,1000,1000}
+	g_camera := camera{vector{0,0,-10}, vector{0,0,0}, vector{0,1,0}}
 
 	f, err := os.OpenFile("x.png", os.O_CREATE | os.O_WRONLY, 0666)
 	if err != nil {
@@ -80,8 +84,28 @@ func main() {
 	m := image.NewRGBA(image.Rect(0,0,g_screen.xres,g_screen.yres))
 	
 	for i:=0; i < g_screen.xres; i++ {
-		for j:=0; j < g_screen.xres; j++ {
-			m.Set(i,j,color.RGBA{255,0,0,255})
+		for j:=0; j < g_screen.yres; j++ {
+			a_to_e := g_camera.eye.sub(&g_camera.look_at)
+			w := a_to_e.unit()
+
+			up_X_a_to_e := g_camera.up.cross(&a_to_e)
+			u := up_X_a_to_e.unit()
+			v := w.cross(&u)
+			
+			cu := (((2.0*float64(i) + 1.0)/(2.0 * float64(g_screen.xres))) - 0.5) * g_screen.w
+			cv := (((2.0*float64(j) + 1.0)/(2.0 * float64(g_screen.yres))) - 0.5) * g_screen.h
+				
+			ucu := u.scalarMult(cu)
+			ucv := v.scalarMult(cv)
+			a_plus_ucu := g_camera.look_at.add(&ucu)
+			Pij := a_plus_ucu.add(&ucv)
+
+			e_to_Pij := Pij.sub(&g_camera.eye)
+
+			current_ray := ray{g_camera.eye, e_to_Pij.unit()}
+			fmt.Println(current_ray)
+
+			m.Set(i,j,color.RGBA{uint8(i%250*j%250),0,0,255})
 		}
 	}
 	if err=png.Encode(f,m); err != nil {
