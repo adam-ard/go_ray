@@ -33,9 +33,10 @@ type screen struct {
 type sphere struct {
 	center vector
 	radius float64
+	red,blue,green uint8
 }
 
-func (s *sphere) getColor(c_ray *ray) (uint8, uint8, uint8) {
+func (s *sphere) getColor(c_ray *ray) (uint8, uint8, uint8, float64, bool) {
 	a := c_ray.direction.x * c_ray.direction.x +
 		c_ray.direction.y * c_ray.direction.y +
 		c_ray.direction.z * c_ray.direction.z
@@ -48,13 +49,30 @@ func (s *sphere) getColor(c_ray *ray) (uint8, uint8, uint8) {
 		s.radius * s.radius
 
 	// test with a sphere
-	var red,blue,green uint8;
-	if b*b-4*a*c > 0.0 {
-		red,blue,green=0,255,0
-	}else{
-		red,blue,green=0,0,0
+	var red,blue,green uint8
+	is_hit:=false
+	i_test:=b*b-4*a*c
+	t1,t2,t_closest:=0.0,0.0,0.0
+	if i_test > 0.0 {
+		red,blue,green=s.red,s.blue,s.green
+		is_hit=true
+		t1=(-b+math.Sqrt(i_test))/(2*a)
+		t2=(-b-math.Sqrt(i_test))/(2*a)
+		if t1 <= 0.0 && t2 <= 0.0 {
+			is_hit=false  // it hit behind or on the viewer
+		}else if t1 > 0.0 && t2 > 0.0 {
+			if t1<t2 {
+				t_closest=t1
+			}else{
+				t_closest=t2
+			}
+		} else if t1 > 0.0 {
+			t_closest = t1
+		} else if t2 > 0.0 {
+			t_closest = t2
+		}
 	}
-	return red,blue,green
+	return red,blue,green,t_closest,is_hit
 }
 
 func (v *vector) sub(v1 *vector) vector {
@@ -126,10 +144,25 @@ func main() {
 			current_ray := ray{g_camera.eye, e_to_Pij.unit()}
 			
 			// put the sphere at the origin
-			s := sphere{vector{0.0, 0.0, 0.0}, 5.0}
+			s := sphere{vector{5.0, 5.0, 0.0}, 5.0, 0, 0, 255}
+			s2 := sphere{vector{0.0, 0.0, 15.0}, 15.0, 255, 255, 0}
 			
-			red, blue, green := s.getColor(&current_ray)
-			m.Set(i,j,color.RGBA{red,blue,green,255})
+			red, blue, green, t, is_hit := s.getColor(&current_ray)
+			red2, blue2, green2, t2, is_hit2 := s2.getColor(&current_ray)
+			
+			if is_hit && is_hit2 {
+				if t<t2 {
+					m.Set(i,j,color.RGBA{red,blue,green,255})
+				}else{
+					m.Set(i,j,color.RGBA{red2,blue2,green2,255})
+				}
+			} else if is_hit {
+				m.Set(i,j,color.RGBA{red,blue,green,255})
+			} else if is_hit2 {
+				m.Set(i,j,color.RGBA{red2,blue2,green2,255})
+			} else {
+				m.Set(i,j,color.RGBA{0,0,0,255})
+			}
 		}
 	}
 	if err=png.Encode(f,m); err != nil {
