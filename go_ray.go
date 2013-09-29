@@ -30,9 +30,31 @@ type screen struct {
 	xres, yres int
 }
 
-type scene struct {
+type sphere struct {
 	center vector
 	radius float64
+}
+
+func (s *sphere) getColor(c_ray *ray) (uint8, uint8, uint8) {
+	a := c_ray.direction.x * c_ray.direction.x +
+		c_ray.direction.y * c_ray.direction.y +
+		c_ray.direction.z * c_ray.direction.z
+	b := 2*((c_ray.start.x-s.center.x)*c_ray.direction.x +
+		(c_ray.start.y-s.center.y)*c_ray.direction.y +
+		(c_ray.start.z-s.center.z)*c_ray.direction.z) 
+	c := (c_ray.start.x-s.center.x) * (c_ray.start.x-s.center.x) +
+		(c_ray.start.y-s.center.y) * (c_ray.start.y-s.center.y) +
+		(c_ray.start.z-s.center.z) * (c_ray.start.z-s.center.z) -
+		s.radius * s.radius
+
+	// test with a sphere
+	var red,blue,green uint8;
+	if b*b-4*a*c > 0.0 {
+		red,blue,green=0,255,0
+	}else{
+		red,blue,green=0,0,0
+	}
+	return red,blue,green
 }
 
 func (v *vector) sub(v1 *vector) vector {
@@ -71,7 +93,6 @@ func (v1 *vector) cross(v2 *vector) vector {
 }
 
 func main() {
-	fmt.Println("hi")
 	g_screen := screen{100,100,1000,1000}
 	g_camera := camera{vector{0,0,-10}, vector{0,0,0}, vector{0,1,0}}
 
@@ -105,27 +126,10 @@ func main() {
 			current_ray := ray{g_camera.eye, e_to_Pij.unit()}
 			
 			// put the sphere at the origin
-			xc := 0.0
-			yc := 0.0
-			zc := 0.0
-			r := 5.0
-			a := current_ray.direction.x * current_ray.direction.x +
-				current_ray.direction.y * current_ray.direction.y +
-				current_ray.direction.z * current_ray.direction.z
-			b := 2*((current_ray.start.x-xc)*current_ray.direction.x +
-				(current_ray.start.y-yc)*current_ray.direction.y +
-				(current_ray.start.z-zc)*current_ray.direction.z) 
-			c := (current_ray.start.x-xc) * (current_ray.start.x-xc) +
-				(current_ray.start.y-yc) * (current_ray.start.y-yc) +
-				(current_ray.start.z-zc) * (current_ray.start.z-zc) -
-				r * r
-				
-			// test with a sphere
-			if sphere_test:=b*b-4*a*c ; sphere_test > 0.0 {
-				m.Set(i,j,color.RGBA{255,0,0,255})
-			}else {
-				m.Set(i,j,color.RGBA{0,0,0,255})
-			}
+			s := sphere{vector{0.0, 0.0, 0.0}, 5.0}
+			
+			red, blue, green := s.getColor(&current_ray)
+			m.Set(i,j,color.RGBA{red,blue,green,255})
 		}
 	}
 	if err=png.Encode(f,m); err != nil {
