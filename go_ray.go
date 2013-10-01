@@ -40,7 +40,7 @@ func (s *sphere) getColor(c_ray *ray) (uint8, uint8, uint8, float64, bool) {
 	a := c_ray.direction.x * c_ray.direction.x +
 		c_ray.direction.y * c_ray.direction.y +
 		c_ray.direction.z * c_ray.direction.z
-	b := 2*((c_ray.start.x-s.center.x)*c_ray.direction.x +
+	b := 2.0*((c_ray.start.x-s.center.x)*c_ray.direction.x +
 		(c_ray.start.y-s.center.y)*c_ray.direction.y +
 		(c_ray.start.z-s.center.z)*c_ray.direction.z) 
 	c := (c_ray.start.x-s.center.x) * (c_ray.start.x-s.center.x) +
@@ -51,13 +51,13 @@ func (s *sphere) getColor(c_ray *ray) (uint8, uint8, uint8, float64, bool) {
 	// test with a sphere
 	var red,blue,green uint8
 	is_hit:=false
-	i_test:=b*b-4*a*c
+	i_test:=b*b-4.0*a*c
 	t1,t2,t_closest:=0.0,0.0,0.0
 	if i_test > 0.0 {
 		red,blue,green=s.red,s.blue,s.green
 		is_hit=true
-		t1=(-b+math.Sqrt(i_test))/(2*a)
-		t2=(-b-math.Sqrt(i_test))/(2*a)
+		t1=(-b+math.Sqrt(i_test))/(2.0*a)
+		t2=(-b-math.Sqrt(i_test))/(2.0*a)
 		if t1 <= 0.0 && t2 <= 0.0 {
 			is_hit=false  // it hit behind or on the viewer
 		}else if t1 > 0.0 && t2 > 0.0 {
@@ -112,7 +112,7 @@ func (v1 *vector) cross(v2 *vector) vector {
 
 func main() {
 	g_screen := screen{100,100,1000,1000}
-	g_camera := camera{vector{0,0,-10}, vector{0,0,0}, vector{0,1,0}}
+	g_camera := camera{vector{0,0,100}, vector{0,0,0}, vector{0,1,0}}
 
 	f, err := os.OpenFile("x.png", os.O_CREATE | os.O_WRONLY, 0666)
 	if err != nil {
@@ -144,8 +144,8 @@ func main() {
 			current_ray := ray{g_camera.eye, e_to_Pij.unit()}
 			
 			// put the sphere at the origin
-			s := sphere{vector{5.0, 5.0, 0.0}, 5.0, 0, 0, 255}
-			s2 := sphere{vector{0.0, 0.0, 15.0}, 15.0, 255, 255, 0}
+			s := sphere{vector{5.0, 15.0, 0.0}, 5.0, 0, 0, 255}
+			s2 := sphere{vector{0.0, 0.0, -15.0}, 15.0, 255, 255, 0}
 			
 			red, blue, green, t, is_hit := s.getColor(&current_ray)
 			red2, blue2, green2, t2, is_hit2 := s2.getColor(&current_ray)
