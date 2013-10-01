@@ -7,6 +7,8 @@ import "os"
 import "image/color"
 import "image/png"
 
+// TODO: see if the circle artifact is a result of saving to a png file
+
 // vector can represent a point as well, if interpreted as
 //  a vector from the origin to a point or 'absolute position vector'.
 //  otherwise it represents a 'relative position vector'
