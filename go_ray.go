@@ -33,10 +33,10 @@ type screen struct {
 type sphere struct {
 	center vector
 	radius float64
-	red,green,blue uint8
+	red,green,blue uint16
 }
 
-func getLightedColor(red, green, blue uint8, t float64, c_ray *ray, light, center *vector) (uint8, uint8, uint8){
+func getLightedColor(red, green, blue uint16, t float64, c_ray *ray, light, center *vector) (uint16, uint16, uint16){
 	dir := c_ray.direction.scalarMult(t)
 	point_on_sphere := c_ray.start.add(&dir)
 	
@@ -50,27 +50,15 @@ func getLightedColor(red, green, blue uint8, t float64, c_ray *ray, light, cente
 	if scale < 0.0 {
 		scale = 0.0
 	}
-	
-	red_light := scale*float64(red) + 50.0
-	if red_light > 255.0 {
-		red_light = 255.0
-	}
 
-	green_light := scale*float64(green) + 50.0
-	if green_light > 255.0 {
-		green_light = 255.0
-	}
-
-	blue_light := scale*float64(blue) + 50.0
-	if blue_light > 255.0 {
-		blue_light = 255.0
-	}
-
-	return uint8(red_light), uint8(green_light), uint8(blue_light)
+	red_light := uint16(scale*float64(red))
+	green_light := uint16(scale*float64(green))
+	blue_light := uint16(scale*float64(blue))
+	return red_light, green_light, blue_light
 }
 
 
-func (s *sphere) getColor(c_ray *ray, light *vector) (uint8, uint8, uint8, float64, bool) {
+func (s *sphere) getColor(c_ray *ray, light *vector) (uint16, uint16, uint16, float64, bool) {
 	a := c_ray.direction.x * c_ray.direction.x +
 		c_ray.direction.y * c_ray.direction.y +
 		c_ray.direction.z * c_ray.direction.z
@@ -105,7 +93,7 @@ func (s *sphere) getColor(c_ray *ray, light *vector) (uint8, uint8, uint8, float
 		}
 	}
 	
-	var red,green,blue uint8
+	var red,green,blue uint16
 	if is_hit {
 		red,green,blue=getLightedColor(s.red,s.green,s.blue,t_closest,c_ray, light, &s.center)
 	}
@@ -150,8 +138,8 @@ func (v1 *vector) cross(v2 *vector) vector {
 
 func main() {
 	g_screen := screen{100,100,1000,1000}
-	g_camera := camera{vector{0,0,100}, vector{0,0,0}, vector{0,1,0}}
-	g_light := vector{100,100,100}
+	g_camera := camera{vector{0,0,1000}, vector{0,0,0}, vector{0,1,0}}
+	g_light := vector{1000,0,1000}
 
 	f, err := os.OpenFile("x.png", os.O_CREATE | os.O_WRONLY, 0666)
 	if err != nil {
@@ -159,7 +147,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	m := image.NewRGBA(image.Rect(0,0,g_screen.xres,g_screen.yres))
+	m := image.NewRGBA64(image.Rect(0,0,g_screen.xres,g_screen.yres))
 	
 	for i:=0; i < g_screen.xres; i++ {
 		for j:=0; j < g_screen.yres; j++ {
@@ -183,24 +171,24 @@ func main() {
 			current_ray := ray{g_camera.eye, e_to_Pij.unit()}
 			
 			// put the sphere at the origin
-			s := sphere{vector{5.0, 15.0, 0.0}, 5.0, 0, 0, 255}
-			s2 := sphere{vector{0.0, 0.0, -15.0}, 15.0, 255, 255, 0}
+			s := sphere{vector{5.0, 15.0, 0.0}, 5.0, 0, 0, 65535}
+			s2 := sphere{vector{0.0, 0.0, -15.0}, 15.0, 0, 65535, 0}
 			
 			red, green, blue, t, is_hit := s.getColor(&current_ray, &g_light)
 			red2, green2, blue2, t2, is_hit2 := s2.getColor(&current_ray, &g_light)
 			
 			if is_hit && is_hit2 {
 				if t<t2 {
-					m.Set(i,j,color.RGBA{red,green,blue,255})
+					m.Set(i,j,color.RGBA64{red,green,blue,65535})
 				}else{
-					m.Set(i,j,color.RGBA{red2,green2,blue2,255})
+					m.Set(i,j,color.RGBA64{red2,green2,blue2,65535})
 				}
 			} else if is_hit {
-				m.Set(i,j,color.RGBA{red,green,blue,255})
+				m.Set(i,j,color.RGBA64{red,green,blue,65535})
 			} else if is_hit2 {
-				m.Set(i,j,color.RGBA{red2,green2,blue2,255})
+				m.Set(i,j,color.RGBA64{red2,green2,blue2,65535})
 			} else {
-				m.Set(i,j,color.RGBA{0,0,0,255})
+				m.Set(i,j,color.RGBA64{0,0,0,65535})
 			}
 		}
 	}
