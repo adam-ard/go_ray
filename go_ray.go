@@ -167,6 +167,39 @@ func (v1 *vector) cross(v2 *vector) vector {
 		v1.x * v2.y - v2.x * v1.y}
 }
 
+func get_local_coordinate_system(eye, look_at, up *vector) (*vector, *vector) {
+	a_to_e := eye.sub(look_at)
+	w := a_to_e.unit()
+	up_X_a_to_e := up.cross(&a_to_e)
+	u := up_X_a_to_e.unit()
+	v := w.cross(&u)
+	return &u, &v
+}
+
+func get_scene() (*scene) {
+	s := sphere{vector{0.0, 0.0, -15.0}, 10.0, 0, 0, 65535}
+	s2 := sphere{vector{5.0, 15.0, 0.0}, 15.0, 0, 65535, 0}
+	s3 := sphere{vector{-5.0, -15.0, 0.0}, 15.0, 65535, 0, 0}
+	the_scene:=new(scene)
+	the_scene.items=make([]sceneItem,3)
+	the_scene.items[0]=&s
+	the_scene.items[1]=&s2
+	the_scene.items[2]=&s3
+	return the_scene
+}
+
+func get_current_ray (i, j int, the_screen *screen, u, v, look_at, eye *vector) (*ray) {
+	cu := (((2.0*float64(i) + 1.0)/(2.0 * float64(the_screen.xres))) - 0.5) * the_screen.w
+	cv := (((2.0*float64(j) + 1.0)/(2.0 * float64(the_screen.yres))) - 0.5) * the_screen.h
+	ucu := u.scalarMult(cu)
+	ucv := v.scalarMult(cv)
+	a_plus_ucu := look_at.add(&ucu)
+	Pij := a_plus_ucu.add(&ucv)
+	e_to_Pij := Pij.sub(eye)
+	current_ray := ray{*eye, e_to_Pij.unit()}
+	return &current_ray
+}
+
 func main() {
 	g_screen := screen{100,100,1000,1000}
 	g_camera := camera{vector{0,0,1000}, vector{0,0,0}, vector{0,1,0}}
@@ -179,38 +212,13 @@ func main() {
 	}
 
 	m := image.NewRGBA64(image.Rect(0,0,g_screen.xres,g_screen.yres))
-	
-	s := sphere{vector{0.0, 0.0, -15.0}, 10.0, 0, 0, 65535}
-	s2 := sphere{vector{5.0, 15.0, 0.0}, 15.0, 0, 65535, 0}
-	s3 := sphere{vector{-5.0, -15.0, 0.0}, 15.0, 65535, 0, 0}
-	the_scene:=new(scene)
-	the_scene.items=make([]sceneItem,3)
-	the_scene.items[0]=&s
-	the_scene.items[1]=&s2
-	the_scene.items[2]=&s3
-
+	the_scene:=get_scene()
+	u, v := get_local_coordinate_system(&g_camera.eye, &g_camera.look_at, &g_camera.up)
 	for i:=0; i < g_screen.xres; i++ {
 		for j:=0; j < g_screen.yres; j++ {
-			a_to_e := g_camera.eye.sub(&g_camera.look_at)
-			w := a_to_e.unit()
-
-			up_X_a_to_e := g_camera.up.cross(&a_to_e)
-			u := up_X_a_to_e.unit()
-			v := w.cross(&u)
-			
-			cu := (((2.0*float64(i) + 1.0)/(2.0 * float64(g_screen.xres))) - 0.5) * g_screen.w
-			cv := (((2.0*float64(j) + 1.0)/(2.0 * float64(g_screen.yres))) - 0.5) * g_screen.h
-				
-			ucu := u.scalarMult(cu)
-			ucv := v.scalarMult(cv)
-			a_plus_ucu := g_camera.look_at.add(&ucu)
-			Pij := a_plus_ucu.add(&ucv)
-
-			e_to_Pij := Pij.sub(&g_camera.eye)
-
-			current_ray := ray{g_camera.eye, e_to_Pij.unit()}
-			
-			red,green,blue:=the_scene.getColor(&current_ray, &g_light)
+			current_ray:=get_current_ray(i, j, &g_screen, u, v, &g_camera.look_at, &g_camera.eye)
+			// shoot the ray into the scene
+			red,green,blue:=the_scene.getColor(current_ray, &g_light)
 			m.Set(i,j,color.RGBA64{red,green,blue,65535})
 		}
 	}
