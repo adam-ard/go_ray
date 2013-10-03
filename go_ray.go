@@ -8,6 +8,7 @@ import "image/color"
 import "image/png"
 
 // TODO: see if the circle artifact is a result of saving to a png file
+// TODO: is it shading the back of the sphere at that point
 
 // vector can represent a point as well, if interpreted as
 //  a vector from the origin to a point or 'absolute position vector'.
@@ -38,6 +39,36 @@ type sphere struct {
 	red,green,blue uint16
 }
 
+type scene struct {
+	items []sceneItem
+}
+
+type sceneItem interface {
+	intersected(c_ray *ray) (float64, bool)   // returns the t for the intersection, if it occured
+	getColor(t float64, c_ray *ray, light *vector) (uint16, uint16, uint16) // get the color at intersection point
+}
+
+func (the_scene *scene) getColor(c_ray *ray, light *vector) (uint16, uint16, uint16) {
+	t_closest := 0.0
+	var closest_item sceneItem = nil
+	for _, value := range the_scene.items {
+		t, is_hit := value.intersected(c_ray)
+		if is_hit == false {
+			continue
+		}
+		if closest_item == nil || (t > 0 && t < t_closest) {
+			t_closest = t
+			closest_item = value
+		}
+	}
+
+	if closest_item == nil {
+		return 0.0, 0.0, 0.0
+	}
+	
+	return closest_item.getColor(t_closest, c_ray, light)
+}
+
 func getLightedColor(red, green, blue uint16, t float64, c_ray *ray, light, center *vector) (uint16, uint16, uint16){
 	dir := c_ray.direction.scalarMult(t)
 	point_on_sphere := c_ray.start.add(&dir)
@@ -60,7 +91,11 @@ func getLightedColor(red, green, blue uint16, t float64, c_ray *ray, light, cent
 }
 
 
-func (s *sphere) getColor(c_ray *ray, light *vector) (uint16, uint16, uint16, float64, bool) {
+func (s *sphere) getColor(t float64, c_ray *ray, light *vector) (uint16, uint16, uint16) {
+	return getLightedColor(s.red,s.green,s.blue,t,c_ray, light, &s.center)
+}
+
+func (s *sphere) intersected(c_ray *ray) (float64, bool)  {
 	a := c_ray.direction.x * c_ray.direction.x +
 		c_ray.direction.y * c_ray.direction.y +
 		c_ray.direction.z * c_ray.direction.z
@@ -72,11 +107,10 @@ func (s *sphere) getColor(c_ray *ray, light *vector) (uint16, uint16, uint16, fl
 		(c_ray.start.z-s.center.z) * (c_ray.start.z-s.center.z) -
 		s.radius * s.radius
 
-	// test with a sphere
 	is_hit:=false
 	i_test:=b*b-4.0*a*c
 	t1,t2,t_closest:=0.0,0.0,0.0
-	if i_test > 0.0 {
+	if i_test >= 0.0 {
 		is_hit=true
 		t1=(-b+math.Sqrt(i_test))/(2.0*a)
 		t2=(-b-math.Sqrt(i_test))/(2.0*a)
@@ -95,12 +129,7 @@ func (s *sphere) getColor(c_ray *ray, light *vector) (uint16, uint16, uint16, fl
 		}
 	}
 	
-	var red,green,blue uint16
-	if is_hit {
-		red,green,blue=getLightedColor(s.red,s.green,s.blue,t_closest,c_ray, light, &s.center)
-	}
-	
-	return red,green,blue,t_closest,is_hit
+	return t_closest, is_hit
 }
 
 func (v *vector) sub(v1 *vector) vector {
@@ -141,7 +170,7 @@ func (v1 *vector) cross(v2 *vector) vector {
 func main() {
 	g_screen := screen{100,100,1000,1000}
 	g_camera := camera{vector{0,0,1000}, vector{0,0,0}, vector{0,1,0}}
-	g_light := vector{1000,0,1000}
+	g_light := vector{0,0,1000}
 
 	f, err := os.OpenFile("x.png", os.O_CREATE | os.O_WRONLY, 0666)
 	if err != nil {
@@ -151,6 +180,15 @@ func main() {
 
 	m := image.NewRGBA64(image.Rect(0,0,g_screen.xres,g_screen.yres))
 	
+	s := sphere{vector{0.0, 0.0, -15.0}, 10.0, 0, 0, 65535}
+	s2 := sphere{vector{5.0, 15.0, 0.0}, 15.0, 0, 65535, 0}
+	s3 := sphere{vector{-5.0, -15.0, 0.0}, 15.0, 65535, 0, 0}
+	the_scene:=new(scene)
+	the_scene.items=make([]sceneItem,3)
+	the_scene.items[0]=&s
+	the_scene.items[1]=&s2
+	the_scene.items[2]=&s3
+
 	for i:=0; i < g_screen.xres; i++ {
 		for j:=0; j < g_screen.yres; j++ {
 			a_to_e := g_camera.eye.sub(&g_camera.look_at)
@@ -172,26 +210,8 @@ func main() {
 
 			current_ray := ray{g_camera.eye, e_to_Pij.unit()}
 			
-			// put the sphere at the origin
-			s := sphere{vector{5.0, 15.0, 0.0}, 5.0, 0, 0, 65535}
-			s2 := sphere{vector{0.0, 0.0, -15.0}, 15.0, 0, 65535, 0}
-			
-			red, green, blue, t, is_hit := s.getColor(&current_ray, &g_light)
-			red2, green2, blue2, t2, is_hit2 := s2.getColor(&current_ray, &g_light)
-			
-			if is_hit && is_hit2 {
-				if t<t2 {
-					m.Set(i,j,color.RGBA64{red,green,blue,65535})
-				}else{
-					m.Set(i,j,color.RGBA64{red2,green2,blue2,65535})
-				}
-			} else if is_hit {
-				m.Set(i,j,color.RGBA64{red,green,blue,65535})
-			} else if is_hit2 {
-				m.Set(i,j,color.RGBA64{red2,green2,blue2,65535})
-			} else {
-				m.Set(i,j,color.RGBA64{0,0,0,65535})
-			}
+			red,green,blue:=the_scene.getColor(&current_ray, &g_light)
+			m.Set(i,j,color.RGBA64{red,green,blue,65535})
 		}
 	}
 	if err=png.Encode(f,m); err != nil {
