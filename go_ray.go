@@ -45,7 +45,7 @@ type scene struct {
 
 type sceneItem interface {
 	intersected(c_ray *ray) (float64, bool)   // returns the t for the intersection, if it occured
-	getColor(t float64, c_ray *ray, light *vector) (uint16, uint16, uint16) // get the color at intersection point
+	getColor(the_scene *scene, t float64, c_ray *ray, light *vector) (uint16, uint16, uint16) // get the color at intersection point
 }
 
 func (the_scene *scene) getColor(c_ray *ray, light *vector) (uint16, uint16, uint16) {
@@ -66,33 +66,53 @@ func (the_scene *scene) getColor(c_ray *ray, light *vector) (uint16, uint16, uin
 		return 0.0, 0.0, 0.0
 	}
 	
-	return closest_item.getColor(t_closest, c_ray, light)
+	return closest_item.getColor(the_scene, t_closest, c_ray, light)
 }
 
-func getLightedColor(red, green, blue uint16, t float64, c_ray *ray, light, center *vector) (uint16, uint16, uint16){
+func (s *sphere) getColor(the_scene *scene, t float64, c_ray *ray, light *vector) (uint16, uint16, uint16) {
+	// get the normal
 	dir := c_ray.direction.scalarMult(t)
 	point_on_sphere := c_ray.start.add(&dir)
 	
-	normal := point_on_sphere.sub(center)
+	normal := point_on_sphere.sub(&s.center)
 	unormal := normal.unit()
 	
+	// check for light obstructions
 	point_on_sphere_to_light := light.sub(&point_on_sphere)
 	upoint_on_sphere_to_light := point_on_sphere_to_light.unit()
 	
-	scale := unormal.dot(&upoint_on_sphere_to_light)
-	if scale < 0.0 {
-		scale = 0.0
+	is_obstructed:=false
+	var red_light,green_light,blue_light float64=0.0,0.0,0.0
+	for _, value := range the_scene.items {
+		_, is_hit := value.intersected(&ray{point_on_sphere, upoint_on_sphere_to_light})
+		if is_hit {
+			is_obstructed=true
+			red_light,green_light,blue_light=0.0,0.0,0.0
+		}
 	}
+	
+	if is_obstructed == false {
+		//calculate the light contribution
+		scale := unormal.dot(&upoint_on_sphere_to_light)
+		if scale < 0.0 {
+			scale = 0.0
+		}
 
-	red_light := uint16(scale*float64(red))
-	green_light := uint16(scale*float64(green))
-	blue_light := uint16(scale*float64(blue))
-	return red_light, green_light, blue_light
+		red_light = scale*float64(s.red)
+		green_light = scale*float64(s.green)
+		blue_light = scale*float64(s.blue)
+	}
+	return uint16(ceiling(red_light + 0.1*float64(s.red),65535)),
+	uint16(ceiling(green_light + 0.1*float64(s.green),65535)), 
+	uint16(ceiling(blue_light + 0.1*float64(s.blue),65535)) 
 }
 
-
-func (s *sphere) getColor(t float64, c_ray *ray, light *vector) (uint16, uint16, uint16) {
-	return getLightedColor(s.red,s.green,s.blue,t,c_ray, light, &s.center)
+var buffer_val float64 = .00001
+func in_buffer(val float64) float64{
+	if val < buffer_val {
+		val = 0.0
+	}
+	return val
 }
 
 func (s *sphere) intersected(c_ray *ray) (float64, bool)  {
@@ -114,6 +134,8 @@ func (s *sphere) intersected(c_ray *ray) (float64, bool)  {
 		is_hit=true
 		t1=(-b+math.Sqrt(i_test))/(2.0*a)
 		t2=(-b-math.Sqrt(i_test))/(2.0*a)
+		t1=in_buffer(t1)
+		t2=in_buffer(t2)
 		if t1 <= 0.0 && t2 <= 0.0 {
 			is_hit=false  // it hit behind or on the viewer
 		}else if t1 > 0.0 && t2 > 0.0 {
@@ -167,6 +189,13 @@ func (v1 *vector) cross(v2 *vector) vector {
 		v1.x * v2.y - v2.x * v1.y}
 }
 
+func ceiling(value float64, top_value float64) float64{
+	if value > top_value {
+		value=top_value
+	}
+	return value
+}
+
 func get_local_coordinate_system(eye, look_at, up *vector) (*vector, *vector) {
 	a_to_e := eye.sub(look_at)
 	w := a_to_e.unit()
@@ -177,7 +206,7 @@ func get_local_coordinate_system(eye, look_at, up *vector) (*vector, *vector) {
 }
 
 func get_scene() (*scene) {
-	s := sphere{vector{-25.0, 15.0, -15.0}, 10.0, 0, 0, 65535}
+	s := sphere{vector{-25.0, 15.0, -10.0}, 10.0, 0, 0, 65535}
 	s2 := sphere{vector{5.0, 15.0, -15.0}, 15.0, 0, 65535, 0}
 	s3 := sphere{vector{-5.0, -15.0, -15.0}, 15.0, 65535, 0, 0}
 	the_scene:=new(scene)
@@ -203,7 +232,7 @@ func get_current_ray (i, j int, the_screen *screen, u, v, look_at, eye *vector) 
 func main() {
 	g_screen := screen{100,100,1000,1000}
 	g_camera := camera{vector{0,0,1000}, vector{0,0,0}, vector{0,1,0}}
-	g_light := vector{1000,0,1000}
+	g_light := vector{-1000.0,0.0,15.0}
 
 	f, err := os.OpenFile("x.png", os.O_CREATE | os.O_WRONLY, 0666)
 	if err != nil {
