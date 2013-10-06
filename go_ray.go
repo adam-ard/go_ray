@@ -43,6 +43,12 @@ type scene struct {
 	items []sceneItem
 }
 
+type zplane struct {
+	loc float64
+	unormal vector
+	red,green,blue uint16
+}
+
 type sceneItem interface {
 	intersected(c_ray *ray) (float64, bool)   // returns the t for the intersection, if it occured
 	getColor(the_scene *scene, t float64, c_ray *ray, light *vector) (uint16, uint16, uint16) // get the color at intersection point
@@ -67,6 +73,59 @@ func (the_scene *scene) getColor(c_ray *ray, light *vector) (uint16, uint16, uin
 	}
 	
 	return closest_item.getColor(the_scene, t_closest, c_ray, light)
+}
+
+func (z *zplane) intersected(c_ray *ray) (float64, bool)  {
+	if c_ray.direction.z == 0.0 {
+		return 0.0, false
+	}
+
+	t := (z.loc - c_ray.start.z) / c_ray.direction.z
+	t = in_buffer(t)
+	if t <= 0.0 {
+		return 0.0, false
+	}
+
+	return t, true
+}
+
+func (z *zplane) getColor(the_scene *scene, t float64, c_ray *ray, light *vector) (uint16, uint16, uint16) {
+	dir := c_ray.direction.scalarMult(t)
+	point_on_plane:= c_ray.start.add(&dir)
+	
+	// check for light obstructions
+	point_on_plane_to_light := light.sub(&point_on_plane)
+	upoint_on_plane_to_light := point_on_plane_to_light.unit()
+	
+	is_obstructed:=false
+	var red_light,green_light,blue_light float64=0.0,0.0,0.0
+	for _, value := range the_scene.items {
+		_, is_hit := value.intersected(&ray{point_on_plane, upoint_on_plane_to_light})
+		if is_hit {
+			is_obstructed=true
+			red_light,green_light,blue_light=0.0,0.0,0.0
+		}
+	}
+	
+	if is_obstructed == false {
+		//calculate the light contribution
+		upoint_on_plane_to_source := c_ray.direction.scalarMult(-1.0)
+		intermediate := z.unormal.scalarMult(2.0 * upoint_on_plane_to_source.dot(&z.unormal))
+		reflected := intermediate.sub(&upoint_on_plane_to_source)
+		ureflected := reflected.unit()
+
+		scale := ureflected.dot(&upoint_on_plane_to_light)
+		if scale < 0.0 {
+			scale = 0.0
+		}
+
+		red_light = scale*float64(z.red)
+		green_light = scale*float64(z.green)
+		blue_light = scale*float64(z.blue)
+	}
+	return uint16(ceiling(red_light + 0.1*float64(z.red),65535)),
+	uint16(ceiling(green_light + 0.1*float64(z.green),65535)), 
+	uint16(ceiling(blue_light + 0.1*float64(z.blue),65535)) 
 }
 
 func (s *sphere) getColor(the_scene *scene, t float64, c_ray *ray, light *vector) (uint16, uint16, uint16) {
@@ -211,14 +270,16 @@ func get_local_coordinate_system(eye, look_at, up *vector) (*vector, *vector) {
 }
 
 func get_scene() (*scene) {
-	s := sphere{vector{-25.0, 15.0, -10.0}, 10.0, 0, 0, 65535}
+	s := sphere{vector{-25.0, 15.0, -5.0}, 10.0, 0, 0, 65535}
 	s2 := sphere{vector{5.0, 15.0, -15.0}, 15.0, 0, 65535, 0}
 	s3 := sphere{vector{-5.0, -15.0, -15.0}, 15.0, 65535, 0, 0}
+	z := zplane{-22.5, vector{0.0, 0.0, -1.0}, 65535, 65535, 65535}
 	the_scene:=new(scene)
-	the_scene.items=make([]sceneItem,3)
+	the_scene.items=make([]sceneItem,4)
 	the_scene.items[0]=&s
 	the_scene.items[1]=&s2
 	the_scene.items[2]=&s3
+	the_scene.items[3]=&z
 	return the_scene
 }
 
@@ -237,7 +298,7 @@ func get_current_ray (i, j int, the_screen *screen, u, v, look_at, eye *vector) 
 func main() {
 	g_screen := screen{100,100,1000,1000}
 	g_camera := camera{vector{0,0,1000}, vector{0,0,0}, vector{0,1,0}}
-	g_light := vector{-1000.0,0.0,15.0}
+	g_light := vector{5.0,5.0,10.0}
 
 	f, err := os.OpenFile("x.png", os.O_CREATE | os.O_WRONLY, 0666)
 	if err != nil {
