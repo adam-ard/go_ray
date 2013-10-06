@@ -93,7 +93,12 @@ func (s *sphere) getColor(the_scene *scene, t float64, c_ray *ray, light *vector
 	
 	if is_obstructed == false {
 		//calculate the light contribution
-		scale := unormal.dot(&upoint_on_sphere_to_light)
+		upoint_on_sphere_to_source := c_ray.direction.scalarMult(-1.0)
+		intermediate := unormal.scalarMult(2.0 * upoint_on_sphere_to_source.dot(&unormal))
+		reflected := intermediate.sub(&upoint_on_sphere_to_source)
+		ureflected := reflected.unit()
+
+		scale := ureflected.dot(&upoint_on_sphere_to_light)
 		if scale < 0.0 {
 			scale = 0.0
 		}
