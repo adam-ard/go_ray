@@ -97,12 +97,12 @@ func (z *zplane) getColor(the_scene *scene, t, ambient float64, c_ray *ray, ligh
 	point_on_plane_to_light := light.sub(&point_on_plane)
 	upoint_on_plane_to_light := point_on_plane_to_light.unit()
 	
+	is_hit:=false
+	scale:=0.0
 	for _, value := range the_scene.items {
-		_, is_hit := value.intersected(&ray{point_on_plane, upoint_on_plane_to_light})
+		_, is_hit = value.intersected(&ray{point_on_plane, upoint_on_plane_to_light})
 		if is_hit {
-			return uint16(ceiling(ambient*float64(z.red),65535)),
-			uint16(ceiling(ambient*float64(z.green),65535)),
-			uint16(ceiling(ambient*float64(z.blue),65535)) 
+			break
 		}
 	}
 	
@@ -111,10 +111,12 @@ func (z *zplane) getColor(the_scene *scene, t, ambient float64, c_ray *ray, ligh
 	intermediate := z.unormal.scalarMult(2.0 * upoint_on_plane_to_source.dot(&z.unormal))
 	reflected := intermediate.sub(&upoint_on_plane_to_source)
 	ureflected := reflected.unit()
-	
-	scale := ureflected.dot(&upoint_on_plane_to_light)
-	if scale < 0.0 {
-		scale = 0.0
+		
+	if is_hit == false {
+		scale = ureflected.dot(&upoint_on_plane_to_light)
+		if scale < 0.0 {
+			scale = 0.0
+		}
 	}
 
 	red_light := scale*float64(z.red)
@@ -145,15 +147,12 @@ func (s *sphere) getColor(the_scene *scene, t, ambient float64, c_ray *ray, ligh
 	point_on_sphere_to_light := light.sub(&point_on_sphere)
 	upoint_on_sphere_to_light := point_on_sphere_to_light.unit()
 	
-	var red_light,green_light,blue_light float64=0.0,0.0,0.0
+	is_hit:=false
+	scale:=0.0
 	for _, value := range the_scene.items {
 		_, is_hit := value.intersected(&ray{point_on_sphere, upoint_on_sphere_to_light})
 		if is_hit {
-			red_light,green_light,blue_light=0.0,0.0,0.0
-
-			return uint16(ceiling(red_light + ambient*float64(s.red),65535)),
-			uint16(ceiling(green_light + ambient*float64(s.green),65535)), 
-			uint16(ceiling(blue_light + ambient*float64(s.blue),65535)) 
+			break
 		}
 	}
 	
@@ -163,14 +162,16 @@ func (s *sphere) getColor(the_scene *scene, t, ambient float64, c_ray *ray, ligh
 	reflected := intermediate.sub(&upoint_on_sphere_to_source)
 	ureflected := reflected.unit()
 	
-	scale := ureflected.dot(&upoint_on_sphere_to_light)
-	if scale < 0.0 {
-		scale = 0.0
+	if is_hit == false {
+		scale := ureflected.dot(&upoint_on_sphere_to_light)
+		if scale < 0.0 {
+			scale = 0.0
+		}
 	}
 
-	red_light = scale*float64(s.red)
-	green_light = scale*float64(s.green)
-	blue_light = scale*float64(s.blue)
+	red_light := scale*float64(s.red)
+	green_light := scale*float64(s.green)
+	blue_light := scale*float64(s.blue)
 
 	obj_red:=ceiling(red_light + ambient*float64(s.red),65535)
 	obj_green:=ceiling(green_light + ambient*float64(s.green),65535)
@@ -283,10 +284,10 @@ func get_local_coordinate_system(eye, look_at, up *vector) (*vector, *vector) {
 }
 
 func get_scene() (*scene) {
-	s := sphere{vector{-25.0, 15.0, -17.5}, 10.0, 0.5, 0, 0, 65535}
-	s2 := sphere{vector{5.0, 15.0, -15.0}, 15.0, 0.5, 0, 65535, 0}
-	s3 := sphere{vector{-5.0, -15.0, -15.0}, 15.0, 0.5, 65535, 0, 0}
-	z := zplane{-22.5, 0.5, vector{0.0, 0.0, -1.0}, 30000, 30000, 30000}
+	s := sphere{vector{-25.0, 15.0, -17.5}, 10.0, 0.75, 0, 0, 65535}
+	s2 := sphere{vector{5.0, 15.0, -15.0}, 15.0, 0.75, 0, 65535, 0}
+	s3 := sphere{vector{-5.0, -15.0, -15.0}, 15.0, 0.75, 65535, 0, 0}
+	z := zplane{-22.5, 0.0, vector{0.0, 0.0, -1.0}, 30000, 30000, 30000}
 	the_scene:=new(scene)
 	the_scene.items=make([]sceneItem,4)
 	the_scene.items[0]=&s
@@ -311,7 +312,7 @@ func get_current_ray (i, j int, the_screen *screen, u, v, look_at, eye *vector) 
 func main() {
 	g_screen := screen{100,100,1000,1000}
 	g_camera := camera{vector{-100,-100,100}, vector{0,0,0}, vector{0,0,-1}}
-	g_light := vector{-100.0,100.0,100.0}
+	g_light := vector{0.0,100.0,100.0}
 	g_ambient := 0.2
 
 	f, err := os.OpenFile("x.png", os.O_CREATE | os.O_WRONLY, 0666)
