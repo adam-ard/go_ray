@@ -69,7 +69,7 @@ func (the_scene *scene) getColor(c_ray *ray, light *vector, ambient float64) (ui
 	}
 
 	if closest_item == nil {
-		return 0.0, 0.0, 0.0
+		return 20000,20000,20000
 	}
 	
 	return closest_item.getColor(the_scene, t_closest, ambient, c_ray, light)
@@ -284,10 +284,10 @@ func get_local_coordinate_system(eye, look_at, up *vector) (*vector, *vector) {
 }
 
 func get_scene() (*scene) {
-	s := sphere{vector{-25.0, 15.0, -17.5}, 10.0, 0.75, 0, 0, 65535}
-	s2 := sphere{vector{5.0, 15.0, -15.0}, 15.0, 0.75, 0, 65535, 0}
-	s3 := sphere{vector{-5.0, -15.0, -15.0}, 15.0, 0.75, 65535, 0, 0}
-	z := zplane{-22.5, 0.0, vector{0.0, 0.0, -1.0}, 30000, 30000, 30000}
+	s := sphere{vector{-25.0, 15.0, -20.0}, 10.0, 0.25, 0, 0, 65535}
+	s2 := sphere{vector{-5.0, -15.0, -15.0}, 15.0, 0.25, 0, 65535, 0}
+	s3 := sphere{vector{5.0, 15.0, -15.0}, 15.0, 0.25, 65535, 0, 0}
+	z := zplane{-30.0, 0.70, vector{0.0, 0.0, -1.0}, 65535, 65535, 65535}
 	the_scene:=new(scene)
 	the_scene.items=make([]sceneItem,4)
 	the_scene.items[0]=&s
@@ -311,7 +311,7 @@ func get_current_ray (i, j int, the_screen *screen, u, v, look_at, eye *vector) 
 
 func main() {
 	g_screen := screen{100,100,1000,1000}
-	g_camera := camera{vector{-100,-100,100}, vector{0,0,0}, vector{0,0,-1}}
+	g_camera := camera{vector{-100,-100,5}, vector{0,0,0}, vector{0,0,-1}}
 	g_light := vector{0.0,100.0,100.0}
 	g_ambient := 0.2
 
