@@ -47,7 +47,7 @@ type zplane struct {
 
 type sceneItem interface {
 	intersected(c_ray *ray) (float64, bool)   // returns the t for the intersection, if it occured
-	getColor(the_scene *scene, t, ambient float64, c_ray *ray, light *vector) (uint16, uint16, uint16) // get the color at intersection point
+	getColor(the_scene *scene, point_on_object *vector, ambient float64, c_ray *ray, light *vector) (uint16, uint16, uint16) // get the color at intersection point
 }
 
 func (z *zplane) getReflectiveness() (float64) {
@@ -94,7 +94,10 @@ func (the_scene *scene) getColor(c_ray *ray, light *vector, ambient float64) (ui
 		return 20000,20000,20000
 	}
 	
-	return closest_item.getColor(the_scene, t_closest, ambient, c_ray, light)
+	dir := c_ray.direction.scalarMult(t_closest)
+	point_on_object:= c_ray.start.add(&dir)
+
+	return closest_item.getColor(the_scene, &point_on_object, ambient, c_ray, light)
 }
 
 func (z *zplane) intersected(c_ray *ray) (float64, bool)  {
@@ -111,20 +114,17 @@ func (z *zplane) intersected(c_ray *ray) (float64, bool)  {
 	return t, true
 }
 
-func (z *zplane) getColor(the_scene *scene, t, ambient float64, c_ray *ray, light *vector) (uint16, uint16, uint16) {
-	dir := c_ray.direction.scalarMult(t)
-	point_on_object:= c_ray.start.add(&dir)
-	
-	unormal := z.getUnitNormal(&point_on_object)
+func (z *zplane) getColor(the_scene *scene, point_on_object *vector, ambient float64, c_ray *ray, light *vector) (uint16, uint16, uint16) {
+	unormal := z.getUnitNormal(point_on_object)
 
 	// check for light obstructions
-	point_on_object_to_light := light.sub(&point_on_object)
+	point_on_object_to_light := light.sub(point_on_object)
 	upoint_on_object_to_light := point_on_object_to_light.unit()
 	
 	is_hit:=false
 	scale:=0.0
 	for _, value := range the_scene.items {
-		_, is_hit = value.intersected(&ray{point_on_object, upoint_on_object_to_light})
+		_, is_hit = value.intersected(&ray{*point_on_object, upoint_on_object_to_light})
 		if is_hit {
 			break
 		}
@@ -154,7 +154,7 @@ func (z *zplane) getColor(the_scene *scene, t, ambient float64, c_ray *ray, ligh
 	obj_blue:=ceiling(blue_light + ambient*float64(blue),65535)
 
 	// send the reflectived ray into the scene
-	reflected_red,reflected_green,reflected_blue:=the_scene.getColor(&ray{point_on_object, ureflected},light,ambient)
+	reflected_red,reflected_green,reflected_blue:=the_scene.getColor(&ray{*point_on_object, ureflected},light,ambient)
 
 	reflectiveness := z.getReflectiveness()
 
@@ -163,21 +163,18 @@ func (z *zplane) getColor(the_scene *scene, t, ambient float64, c_ray *ray, ligh
 	uint16(reflectiveness*float64(reflected_blue) + (1.0-reflectiveness)*obj_blue)
 }
 
-func (s *sphere) getColor(the_scene *scene, t, ambient float64, c_ray *ray, light *vector) (uint16, uint16, uint16) {
+func (s *sphere) getColor(the_scene *scene, point_on_object *vector, ambient float64, c_ray *ray, light *vector) (uint16, uint16, uint16) {
 	// get the normal
-	dir := c_ray.direction.scalarMult(t)
-	point_on_object := c_ray.start.add(&dir)
-	
-	unormal := s.getUnitNormal(&point_on_object)
+	unormal := s.getUnitNormal(point_on_object)
 	
 	// check for light obstructions
-	point_on_object_to_light := light.sub(&point_on_object)
+	point_on_object_to_light := light.sub(point_on_object)
 	upoint_on_object_to_light := point_on_object_to_light.unit()
 	
 	is_hit:=false
 	scale:=0.0
 	for _, value := range the_scene.items {
-		_, is_hit = value.intersected(&ray{point_on_object, upoint_on_object_to_light})
+		_, is_hit = value.intersected(&ray{*point_on_object, upoint_on_object_to_light})
 		if is_hit {
 			break
 		}
@@ -207,7 +204,7 @@ func (s *sphere) getColor(the_scene *scene, t, ambient float64, c_ray *ray, ligh
 	obj_blue:=ceiling(blue_light + ambient*float64(blue),65535)
 
 	// send the reflectived ray into the scene
-	reflected_red,reflected_green,reflected_blue:=the_scene.getColor(&ray{point_on_object,ureflected},light,ambient)
+	reflected_red,reflected_green,reflected_blue:=the_scene.getColor(&ray{*point_on_object,ureflected},light,ambient)
 
 	reflectiveness := s.getReflectiveness()
 
