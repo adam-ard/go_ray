@@ -113,31 +113,31 @@ func (z *zplane) intersected(c_ray *ray) (float64, bool)  {
 
 func (z *zplane) getColor(the_scene *scene, t, ambient float64, c_ray *ray, light *vector) (uint16, uint16, uint16) {
 	dir := c_ray.direction.scalarMult(t)
-	point_on_plane:= c_ray.start.add(&dir)
+	point_on_object:= c_ray.start.add(&dir)
 	
-	unormal := z.getUnitNormal(&point_on_plane)
+	unormal := z.getUnitNormal(&point_on_object)
 
 	// check for light obstructions
-	point_on_plane_to_light := light.sub(&point_on_plane)
-	upoint_on_plane_to_light := point_on_plane_to_light.unit()
+	point_on_object_to_light := light.sub(&point_on_object)
+	upoint_on_object_to_light := point_on_object_to_light.unit()
 	
 	is_hit:=false
 	scale:=0.0
 	for _, value := range the_scene.items {
-		_, is_hit = value.intersected(&ray{point_on_plane, upoint_on_plane_to_light})
+		_, is_hit = value.intersected(&ray{point_on_object, upoint_on_object_to_light})
 		if is_hit {
 			break
 		}
 	}
 	
 	//calculate the light contribution
-	upoint_on_plane_to_source := c_ray.direction.scalarMult(-1.0)
-	intermediate := unormal.scalarMult(2.0 * upoint_on_plane_to_source.dot(unormal))
-	reflected := intermediate.sub(&upoint_on_plane_to_source)
+	upoint_on_object_to_source := c_ray.direction.scalarMult(-1.0)
+	intermediate := unormal.scalarMult(2.0 * upoint_on_object_to_source.dot(unormal))
+	reflected := intermediate.sub(&upoint_on_object_to_source)
 	ureflected := reflected.unit()
 		
 	if is_hit == false {
-		scale = ureflected.dot(&upoint_on_plane_to_light)
+		scale = ureflected.dot(&upoint_on_object_to_light)
 		if scale < 0.0 {
 			scale = 0.0
 		}
@@ -152,7 +152,7 @@ func (z *zplane) getColor(the_scene *scene, t, ambient float64, c_ray *ray, ligh
 	obj_blue:=ceiling(blue_light + ambient*float64(z.blue),65535)
 
 	// send the reflectived ray into the scene
-	reflected_red,reflected_green,reflected_blue:=the_scene.getColor(&ray{point_on_plane, ureflected},light,ambient)
+	reflected_red,reflected_green,reflected_blue:=the_scene.getColor(&ray{point_on_object, ureflected},light,ambient)
 
 	return uint16(z.reflectiveness*float64(reflected_red) + (1.0-z.reflectiveness)*obj_red),
 	uint16(z.reflectiveness*float64(reflected_green) + (1.0-z.reflectiveness)*obj_green), 
@@ -162,31 +162,31 @@ func (z *zplane) getColor(the_scene *scene, t, ambient float64, c_ray *ray, ligh
 func (s *sphere) getColor(the_scene *scene, t, ambient float64, c_ray *ray, light *vector) (uint16, uint16, uint16) {
 	// get the normal
 	dir := c_ray.direction.scalarMult(t)
-	point_on_sphere := c_ray.start.add(&dir)
+	point_on_object := c_ray.start.add(&dir)
 	
-	unormal := s.getUnitNormal(&point_on_sphere)
+	unormal := s.getUnitNormal(&point_on_object)
 	
 	// check for light obstructions
-	point_on_sphere_to_light := light.sub(&point_on_sphere)
-	upoint_on_sphere_to_light := point_on_sphere_to_light.unit()
+	point_on_object_to_light := light.sub(&point_on_object)
+	upoint_on_object_to_light := point_on_object_to_light.unit()
 	
 	is_hit:=false
 	scale:=0.0
 	for _, value := range the_scene.items {
-		_, is_hit := value.intersected(&ray{point_on_sphere, upoint_on_sphere_to_light})
+		_, is_hit := value.intersected(&ray{point_on_object, upoint_on_object_to_light})
 		if is_hit {
 			break
 		}
 	}
 	
 	//calculate the light contribution
-	upoint_on_sphere_to_source := c_ray.direction.scalarMult(-1.0)
-	intermediate := unormal.scalarMult(2.0 * upoint_on_sphere_to_source.dot(unormal))
-	reflected := intermediate.sub(&upoint_on_sphere_to_source)
+	upoint_on_object_to_source := c_ray.direction.scalarMult(-1.0)
+	intermediate := unormal.scalarMult(2.0 * upoint_on_object_to_source.dot(unormal))
+	reflected := intermediate.sub(&upoint_on_object_to_source)
 	ureflected := reflected.unit()
 	
 	if is_hit == false {
-		scale := ureflected.dot(&upoint_on_sphere_to_light)
+		scale := ureflected.dot(&upoint_on_object_to_light)
 		if scale < 0.0 {
 			scale = 0.0
 		}
@@ -201,7 +201,7 @@ func (s *sphere) getColor(the_scene *scene, t, ambient float64, c_ray *ray, ligh
 	obj_blue:=ceiling(blue_light + ambient*float64(s.blue),65535)
 
 	// send the reflectived ray into the scene
-	reflected_red,reflected_green,reflected_blue:=the_scene.getColor(&ray{point_on_sphere,ureflected},light,ambient)
+	reflected_red,reflected_green,reflected_blue:=the_scene.getColor(&ray{point_on_object,ureflected},light,ambient)
 
 	return uint16(s.reflectiveness*float64(reflected_red) + (1.0-s.reflectiveness)*obj_red), 
 	uint16(s.reflectiveness*float64(reflected_green) + (1.0-s.reflectiveness)*obj_green), 
