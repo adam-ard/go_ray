@@ -42,13 +42,38 @@ type scene struct {
 
 type zplane struct {
 	loc, reflectiveness float64
-	unormal vector
 	red,green,blue uint16
 }
 
 type sceneItem interface {
 	intersected(c_ray *ray) (float64, bool)   // returns the t for the intersection, if it occured
 	getColor(the_scene *scene, t, ambient float64, c_ray *ray, light *vector) (uint16, uint16, uint16) // get the color at intersection point
+}
+
+func (z *zplane) getReflectiveness() (float64) {
+	return z.reflectiveness
+}
+
+func (s *sphere) getReflectiveness() (float64) {
+	return s.reflectiveness
+}
+
+func (z *zplane) getColorRaw() (uint16, uint16, uint16) {
+	return z.red, z.green, z.blue
+}
+
+func (s *sphere) getColorRaw() (uint16, uint16, uint16) {
+	return s.red, s.green, s.blue
+}
+
+func (z *zplane) getUnitNormal(point *vector) (*vector) {
+	return &vector{0.0, 0.0, -1.0}
+}
+
+func (s *sphere) getUnitNormal(point *vector) (*vector) {
+	normal := point.sub(&s.center)
+	unormal := normal.unit()
+	return &unormal
 }
 
 func (the_scene *scene) getColor(c_ray *ray, light *vector, ambient float64) (uint16, uint16, uint16) {
@@ -90,6 +115,8 @@ func (z *zplane) getColor(the_scene *scene, t, ambient float64, c_ray *ray, ligh
 	dir := c_ray.direction.scalarMult(t)
 	point_on_plane:= c_ray.start.add(&dir)
 	
+	unormal := z.getUnitNormal(&point_on_plane)
+
 	// check for light obstructions
 	point_on_plane_to_light := light.sub(&point_on_plane)
 	upoint_on_plane_to_light := point_on_plane_to_light.unit()
@@ -105,7 +132,7 @@ func (z *zplane) getColor(the_scene *scene, t, ambient float64, c_ray *ray, ligh
 	
 	//calculate the light contribution
 	upoint_on_plane_to_source := c_ray.direction.scalarMult(-1.0)
-	intermediate := z.unormal.scalarMult(2.0 * upoint_on_plane_to_source.dot(&z.unormal))
+	intermediate := unormal.scalarMult(2.0 * upoint_on_plane_to_source.dot(unormal))
 	reflected := intermediate.sub(&upoint_on_plane_to_source)
 	ureflected := reflected.unit()
 		
@@ -284,7 +311,7 @@ func get_scene() (*scene) {
 	s := sphere{vector{-25.0, 15.0, -20.0}, 10.0, 0.25, 0, 0, 65535}
 	s2 := sphere{vector{-5.0, -15.0, -15.0}, 15.0, 0.25, 0, 65535, 0}
 	s3 := sphere{vector{5.0, 15.0, -15.0}, 15.0, 0.25, 65535, 0, 0}
-	z := zplane{-30.0, 0.70, vector{0.0, 0.0, -1.0}, 65535, 65535, 65535}
+	z := zplane{-30.0, 0.70, 65535, 65535, 65535}
 	the_scene:=new(scene)
 	the_scene.items=make([]sceneItem,4)
 	the_scene.items[0]=&s
