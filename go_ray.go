@@ -33,7 +33,7 @@ type screen struct {
 type sphere struct {
 	center vector
 	radius,reflectiveness float64
-	red,green,blue uint16
+	red,green,blue float64
 }
 
 type scene struct {
@@ -42,13 +42,13 @@ type scene struct {
 
 type zplane struct {
 	loc, reflectiveness float64
-	red,green,blue uint16
+	red,green,blue float64
 }
 
 type sceneItem interface {
 	intersected(c_ray *ray) (float64, bool)   // returns the t for the intersection, if it occured
 	getReflectiveness() (float64)
-	getColorRaw() (uint16, uint16, uint16)
+	getColorRaw() (float64, float64, float64)
 	getUnitNormal(point *vector) (*vector)
 }
 
@@ -60,11 +60,11 @@ func (s *sphere) getReflectiveness() (float64) {
 	return s.reflectiveness
 }
 
-func (z *zplane) getColorRaw() (uint16, uint16, uint16) {
+func (z *zplane) getColorRaw() (float64, float64, float64) {
 	return z.red, z.green, z.blue
 }
 
-func (s *sphere) getColorRaw() (uint16, uint16, uint16) {
+func (s *sphere) getColorRaw() (float64, float64, float64) {
 	return s.red, s.green, s.blue
 }
 
@@ -78,7 +78,7 @@ func (s *sphere) getUnitNormal(point *vector) (*vector) {
 	return &unormal
 }
 
-func (the_scene *scene) getColor(c_ray *ray, light *vector, ambient float64) (uint16, uint16, uint16) {
+func (the_scene *scene) getColor(c_ray *ray, light *vector, ambient float64) (float64, float64, float64) {
 	t_closest := 0.0
 	var closest_item sceneItem = nil
 	for _, value := range the_scene.items {
@@ -93,7 +93,7 @@ func (the_scene *scene) getColor(c_ray *ray, light *vector, ambient float64) (ui
 	}
 
 	if closest_item == nil {
-		return 20000,20000,20000
+		return 0,0,0
 	}
 	
 	dir := c_ray.direction.scalarMult(t_closest)
@@ -129,22 +129,22 @@ func (the_scene *scene) getColor(c_ray *ray, light *vector, ambient float64) (ui
 
 	red,green,blue:=closest_item.getColorRaw()
 	
-	red_light := scale*float64(red)
-	green_light := scale*float64(green)
-	blue_light := scale*float64(blue)
+	red_light := scale*red
+	green_light := scale*green
+	blue_light := scale*blue
 	
-	obj_red:=ceiling(red_light + ambient*float64(red),65535)
-	obj_green:=ceiling(green_light + ambient*float64(green),65535)
-	obj_blue:=ceiling(blue_light + ambient*float64(blue),65535)
+	obj_red:=ceiling(red_light + ambient*red,1.0)
+	obj_green:=ceiling(green_light + ambient*green,1.0)
+	obj_blue:=ceiling(blue_light + ambient*blue,1.0)
 
 	// send the reflectived ray into the scene
 	reflected_red,reflected_green,reflected_blue:=the_scene.getColor(&ray{point_on_object, ureflected},light,ambient)
 
 	reflectiveness := closest_item.getReflectiveness()
 
-	return uint16(reflectiveness*float64(reflected_red) + (1.0-reflectiveness)*obj_red),
-	uint16(reflectiveness*float64(reflected_green) + (1.0-reflectiveness)*obj_green), 
-	uint16(reflectiveness*float64(reflected_blue) + (1.0-reflectiveness)*obj_blue)
+	return reflectiveness*reflected_red + (1.0-reflectiveness)*obj_red,
+	reflectiveness*reflected_green + (1.0-reflectiveness)*obj_green, 
+	reflectiveness*reflected_blue + (1.0-reflectiveness)*obj_blue
 }
 
 func (z *zplane) intersected(c_ray *ray) (float64, bool)  {
@@ -260,10 +260,10 @@ func get_local_coordinate_system(eye, look_at, up *vector) (*vector, *vector) {
 }
 
 func get_scene() (*scene) {
-	s := sphere{vector{-25.0, 15.0, -20.0}, 10.0, 0.25, 0, 0, 65535}
-	s2 := sphere{vector{-5.0, -15.0, -15.0}, 15.0, 0.25, 0, 65535, 0}
-	s3 := sphere{vector{5.0, 15.0, -15.0}, 15.0, 0.25, 65535, 0, 0}
-	z := zplane{-30.0, 0.70, 65535, 65535, 65535}
+	s := sphere{vector{-25.0, 15.0, -20.0}, 10.0, 0.25, 0, 0, 1.0}
+	s2 := sphere{vector{-5.0, -15.0, -15.0}, 15.0, 0.25, 0, 1.0, 0}
+	s3 := sphere{vector{5.0, 15.0, -15.0}, 15.0, 0.25, 1.0, 0, 0}
+	z := zplane{-30.0, 0.70, 1.0, 1.0, 1.0}
 	the_scene:=new(scene)
 	the_scene.items=make([]sceneItem,4)
 	the_scene.items[0]=&s
@@ -305,7 +305,7 @@ func main() {
 			current_ray:=get_current_ray(i, j, &g_screen, u, v, &g_camera.look_at, &g_camera.eye)
 			// shoot the ray into the scene
 			red,green,blue:=the_scene.getColor(current_ray, &g_light, g_ambient)
-			m.Set(i,j,color.RGBA64{red,green,blue,65535})
+			m.Set(i,j,color.RGBA64{uint16(65535*red),uint16(65535*green),uint16(65535*blue),65535})
 		}
 	}
 	if err=png.Encode(f,m); err != nil {
