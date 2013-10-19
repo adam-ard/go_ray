@@ -40,7 +40,7 @@ type scene struct {
 	items []sceneItem
 }
 
-type zplane struct {
+type yplane struct {
 	loc, reflectiveness float64
 	red,green,blue float64
 }
@@ -52,24 +52,24 @@ type sceneItem interface {
 	getUnitNormal(point *vector) (*vector)
 }
 
-func (z *zplane) getReflectiveness() (float64) {
-	return z.reflectiveness
+func (y *yplane) getReflectiveness() (float64) {
+	return y.reflectiveness
 }
 
 func (s *sphere) getReflectiveness() (float64) {
 	return s.reflectiveness
 }
 
-func (z *zplane) getColorRaw() (float64, float64, float64) {
-	return z.red, z.green, z.blue
+func (y *yplane) getColorRaw() (float64, float64, float64) {
+	return y.red, y.green, y.blue
 }
 
 func (s *sphere) getColorRaw() (float64, float64, float64) {
 	return s.red, s.green, s.blue
 }
 
-func (z *zplane) getUnitNormal(point *vector) (*vector) {
-	return &vector{0.0, 0.0, -1.0}
+func (y *yplane) getUnitNormal(point *vector) (*vector) {
+	return &vector{0.0, 1.0, 0.0}
 }
 
 func (s *sphere) getUnitNormal(point *vector) (*vector) {
@@ -147,12 +147,12 @@ func (the_scene *scene) getColor(c_ray *ray, light *vector, ambient float64) (fl
 	reflectiveness*reflected_blue + (1.0-reflectiveness)*obj_blue
 }
 
-func (z *zplane) intersected(c_ray *ray) (float64, bool)  {
-	if c_ray.direction.z == 0.0 {
+func (y *yplane) intersected(c_ray *ray) (float64, bool)  {
+	if c_ray.direction.y == 0.0 {
 		return 0.0, false
 	}
 
-	t := (z.loc - c_ray.start.z) / c_ray.direction.z
+	t := (y.loc - c_ray.start.y) / c_ray.direction.y
 	t = in_buffer(t)
 	if t <= 0.0 {
 		return 0.0, false
@@ -260,16 +260,16 @@ func get_local_coordinate_system(eye, look_at, up *vector) (*vector, *vector) {
 }
 
 func get_scene() (*scene) {
-	s := sphere{vector{-25.0, 15.0, -20.0}, 10.0, 0.25, 0, 0, 1.0}
-	s2 := sphere{vector{-5.0, -15.0, -15.0}, 15.0, 0.25, 0, 1.0, 0}
-	s3 := sphere{vector{5.0, 15.0, -15.0}, 15.0, 0.25, 1.0, 0, 0}
-	z := zplane{-30.0, 0.70, 1.0, 1.0, 1.0}
+	s := sphere{vector{-25.0, 10.0, -20.0}, 10.0, 0.25, 0, 0, 0.75}
+	s2 := sphere{vector{5.0, 15.0, 15.0}, 15.0, 0.25, 0, 0.75, 0}
+	s3 := sphere{vector{5.0, 15.0, -15.0}, 15.0, 0.25, 0.75, 0, 0}
+	y := yplane{0.0, 0.70, 1.0, 1.0, 1.0}
 	the_scene:=new(scene)
 	the_scene.items=make([]sceneItem,4)
 	the_scene.items[0]=&s
 	the_scene.items[1]=&s2
 	the_scene.items[2]=&s3
-	the_scene.items[3]=&z
+	the_scene.items[3]=&y
 	return the_scene
 }
 
@@ -287,7 +287,7 @@ func get_current_ray (i, j int, the_screen *screen, u, v, look_at, eye *vector) 
 
 func main() {
 	g_screen := screen{100,100,1000,1000}
-	g_camera := camera{vector{-100,-100,5}, vector{0,0,0}, vector{0,0,-1}}
+	g_camera := camera{vector{-100,50,50}, vector{5,15,-15}, vector{0,1,0}}
 	g_light := vector{0.0,100.0,100.0}
 	g_ambient := 0.2
 
@@ -305,7 +305,7 @@ func main() {
 			current_ray:=get_current_ray(i, j, &g_screen, u, v, &g_camera.look_at, &g_camera.eye)
 			// shoot the ray into the scene
 			red,green,blue:=the_scene.getColor(current_ray, &g_light, g_ambient)
-			m.Set(i,j,color.RGBA64{uint16(65535*red),uint16(65535*green),uint16(65535*blue),65535})
+			m.Set(i,g_screen.yres-j,color.RGBA64{uint16(65535*red),uint16(65535*green),uint16(65535*blue),65535})
 		}
 	}
 	if err=png.Encode(f,m); err != nil {
