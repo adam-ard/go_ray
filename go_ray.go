@@ -177,7 +177,7 @@ func (s *sphere) getColor(the_scene *scene, t, ambient float64, c_ray *ray, ligh
 	is_hit:=false
 	scale:=0.0
 	for _, value := range the_scene.items {
-		_, is_hit := value.intersected(&ray{point_on_object, upoint_on_object_to_light})
+		_, is_hit = value.intersected(&ray{point_on_object, upoint_on_object_to_light})
 		if is_hit {
 			break
 		}
@@ -190,7 +190,7 @@ func (s *sphere) getColor(the_scene *scene, t, ambient float64, c_ray *ray, ligh
 	ureflected := reflected.unit()
 	
 	if is_hit == false {
-		scale := ureflected.dot(&upoint_on_object_to_light)
+		scale = ureflected.dot(&upoint_on_object_to_light)
 		if scale < 0.0 {
 			scale = 0.0
 		}
