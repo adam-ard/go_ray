@@ -7,9 +7,6 @@ import "os"
 import "image/color"
 import "image/png"
 
-// TODO: see if the circle artifact is a result of saving to a png file
-// TODO: is it shading the back of the sphere at that point
-
 // vector can represent a point as well, if interpreted as
 //  a vector from the origin to a point or 'absolute position vector'.
 //  otherwise it represents a 'relative position vector'
