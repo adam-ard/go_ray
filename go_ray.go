@@ -143,13 +143,15 @@ func (z *zplane) getColor(the_scene *scene, t, ambient float64, c_ray *ray, ligh
 		}
 	}
 
-	red_light := scale*float64(z.red)
-	green_light := scale*float64(z.green)
-	blue_light := scale*float64(z.blue)
+	red,green,blue:=z.getColorRaw()
 	
-	obj_red:=ceiling(red_light + ambient*float64(z.red),65535)
-	obj_green:=ceiling(green_light + ambient*float64(z.green),65535)
-	obj_blue:=ceiling(blue_light + ambient*float64(z.blue),65535)
+	red_light := scale*float64(red)
+	green_light := scale*float64(green)
+	blue_light := scale*float64(blue)
+	
+	obj_red:=ceiling(red_light + ambient*float64(red),65535)
+	obj_green:=ceiling(green_light + ambient*float64(green),65535)
+	obj_blue:=ceiling(blue_light + ambient*float64(blue),65535)
 
 	// send the reflectived ray into the scene
 	reflected_red,reflected_green,reflected_blue:=the_scene.getColor(&ray{point_on_object, ureflected},light,ambient)
@@ -192,13 +194,15 @@ func (s *sphere) getColor(the_scene *scene, t, ambient float64, c_ray *ray, ligh
 		}
 	}
 
-	red_light := scale*float64(s.red)
-	green_light := scale*float64(s.green)
-	blue_light := scale*float64(s.blue)
+	red,green,blue:=s.getColorRaw()
 
-	obj_red:=ceiling(red_light + ambient*float64(s.red),65535)
-	obj_green:=ceiling(green_light + ambient*float64(s.green),65535)
-	obj_blue:=ceiling(blue_light + ambient*float64(s.blue),65535)
+	red_light := scale*float64(red)
+	green_light := scale*float64(green)
+	blue_light := scale*float64(blue)
+
+	obj_red:=ceiling(red_light + ambient*float64(red),65535)
+	obj_green:=ceiling(green_light + ambient*float64(green),65535)
+	obj_blue:=ceiling(blue_light + ambient*float64(blue),65535)
 
 	// send the reflectived ray into the scene
 	reflected_red,reflected_green,reflected_blue:=the_scene.getColor(&ray{point_on_object,ureflected},light,ambient)
