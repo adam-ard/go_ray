@@ -164,8 +164,7 @@ func (s *sphere) getColor(the_scene *scene, t, ambient float64, c_ray *ray, ligh
 	dir := c_ray.direction.scalarMult(t)
 	point_on_sphere := c_ray.start.add(&dir)
 	
-	normal := point_on_sphere.sub(&s.center)
-	unormal := normal.unit()
+	unormal := s.getUnitNormal(&point_on_sphere)
 	
 	// check for light obstructions
 	point_on_sphere_to_light := light.sub(&point_on_sphere)
@@ -182,7 +181,7 @@ func (s *sphere) getColor(the_scene *scene, t, ambient float64, c_ray *ray, ligh
 	
 	//calculate the light contribution
 	upoint_on_sphere_to_source := c_ray.direction.scalarMult(-1.0)
-	intermediate := unormal.scalarMult(2.0 * upoint_on_sphere_to_source.dot(&unormal))
+	intermediate := unormal.scalarMult(2.0 * upoint_on_sphere_to_source.dot(unormal))
 	reflected := intermediate.sub(&upoint_on_sphere_to_source)
 	ureflected := reflected.unit()
 	
