@@ -156,9 +156,11 @@ func (z *zplane) getColor(the_scene *scene, t, ambient float64, c_ray *ray, ligh
 	// send the reflectived ray into the scene
 	reflected_red,reflected_green,reflected_blue:=the_scene.getColor(&ray{point_on_object, ureflected},light,ambient)
 
-	return uint16(z.reflectiveness*float64(reflected_red) + (1.0-z.reflectiveness)*obj_red),
-	uint16(z.reflectiveness*float64(reflected_green) + (1.0-z.reflectiveness)*obj_green), 
-	uint16(z.reflectiveness*float64(reflected_blue) + (1.0-z.reflectiveness)*obj_blue)
+	reflectiveness := z.getReflectiveness()
+
+	return uint16(reflectiveness*float64(reflected_red) + (1.0-reflectiveness)*obj_red),
+	uint16(reflectiveness*float64(reflected_green) + (1.0-reflectiveness)*obj_green), 
+	uint16(reflectiveness*float64(reflected_blue) + (1.0-reflectiveness)*obj_blue)
 }
 
 func (s *sphere) getColor(the_scene *scene, t, ambient float64, c_ray *ray, light *vector) (uint16, uint16, uint16) {
@@ -207,9 +209,11 @@ func (s *sphere) getColor(the_scene *scene, t, ambient float64, c_ray *ray, ligh
 	// send the reflectived ray into the scene
 	reflected_red,reflected_green,reflected_blue:=the_scene.getColor(&ray{point_on_object,ureflected},light,ambient)
 
-	return uint16(s.reflectiveness*float64(reflected_red) + (1.0-s.reflectiveness)*obj_red), 
-	uint16(s.reflectiveness*float64(reflected_green) + (1.0-s.reflectiveness)*obj_green), 
-	uint16(s.reflectiveness*float64(reflected_blue) + (1.0-s.reflectiveness)*obj_blue)
+	reflectiveness := s.getReflectiveness()
+
+	return uint16(reflectiveness*float64(reflected_red) + (1.0-reflectiveness)*obj_red), 
+	uint16(reflectiveness*float64(reflected_green) + (1.0-reflectiveness)*obj_green), 
+	uint16(reflectiveness*float64(reflected_blue) + (1.0-reflectiveness)*obj_blue)
 }
 
 var buffer_val float64 = .00001
