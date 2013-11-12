@@ -167,14 +167,28 @@ func main() {
 	m := image.NewRGBA64(image.Rect(0,0,g_screen.xres,g_screen.yres))
 	the_scene:=get_scene()
 	u, v := get_local_coordinate_system(&g_camera.eye, &g_camera.look_at, &g_camera.up)
-	for i:=0; i < g_screen.xres; i++ {
-		for j:=0; j < g_screen.yres; j++ {
-			current_ray:=get_current_ray(i, j, &g_screen, u, v, &g_camera.look_at, &g_camera.eye)
-			// shoot the ray into the scene
-			red,green,blue:=the_scene.getColor(current_ray, &g_light, g_ambient)
-			m.Set(i,g_screen.yres-j,color.RGBA64{uint16(65535*red),uint16(65535*green),uint16(65535*blue),65535})
-		}
+
+	num_segments := 1
+	d:=make(chan bool,num_segments)
+	step := g_screen.xres / num_segments
+	for segment:=0; segment < num_segments; segment++ {
+		go func(c_seg int) {
+//			fmt.Println(c_seg, step)
+			for i:=c_seg * step; i < (c_seg + 1) * step; i++ {
+				for j:=0; j < g_screen.yres; j++ {
+					current_ray:=get_current_ray(i, j, &g_screen, u, v, &g_camera.look_at, &g_camera.eye)
+					red,green,blue:=the_scene.getColor(current_ray, &g_light, g_ambient)
+					m.Set(i,g_screen.yres-j,color.RGBA64{uint16(65535*red),uint16(65535*green),uint16(65535*blue),65535})
+				}
+			}
+			d<-true
+		}(segment)
 	}
+
+	for count:=0 ; count < num_segments ; count++ {
+		<-d
+	}
+	
 	if err=png.Encode(f,m); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
