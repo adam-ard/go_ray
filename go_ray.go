@@ -1,18 +1,10 @@
 package main
 
-import "math"
 import "fmt"
 import "image"
 import "os"
 import "image/color"
 import "image/png"
-
-// vector can represent a point as well, if interpreted as
-//  a vector from the origin to a point or 'absolute position vector'.
-//  otherwise it represents a 'relative position vector'
-type vector struct {
-	x, y, z float64
-}
 
 type ray struct {
 	start vector
@@ -30,19 +22,8 @@ type screen struct {
 	xres, yres int
 }
 
-type sphere struct {
-	center vector
-	radius,reflectiveness float64
-	red,green,blue float64
-}
-
 type scene struct {
 	items []sceneItem
-}
-
-type yplane struct {
-	loc, reflectiveness float64
-	red,green,blue float64
 }
 
 type sceneItem interface {
@@ -50,32 +31,6 @@ type sceneItem interface {
 	getReflectiveness() (float64)
 	getColorRaw() (float64, float64, float64)
 	getUnitNormal(point *vector) (*vector)
-}
-
-func (y *yplane) getReflectiveness() (float64) {
-	return y.reflectiveness
-}
-
-func (s *sphere) getReflectiveness() (float64) {
-	return s.reflectiveness
-}
-
-func (y *yplane) getColorRaw() (float64, float64, float64) {
-	return y.red, y.green, y.blue
-}
-
-func (s *sphere) getColorRaw() (float64, float64, float64) {
-	return s.red, s.green, s.blue
-}
-
-func (y *yplane) getUnitNormal(point *vector) (*vector) {
-	return &vector{0.0, 1.0, 0.0}
-}
-
-func (s *sphere) getUnitNormal(point *vector) (*vector) {
-	normal := point.sub(&s.center)
-	unormal := normal.unit()
-	return &unormal
 }
 
 func (the_scene *scene) getColor(c_ray *ray, light *vector, ambient float64) (float64, float64, float64) {
@@ -147,100 +102,12 @@ func (the_scene *scene) getColor(c_ray *ray, light *vector, ambient float64) (fl
 	reflectiveness*reflected_blue + (1.0-reflectiveness)*obj_blue
 }
 
-func (y *yplane) intersected(c_ray *ray) (float64, bool)  {
-	if c_ray.direction.y == 0.0 {
-		return 0.0, false
-	}
-
-	t := (y.loc - c_ray.start.y) / c_ray.direction.y
-	t = in_buffer(t)
-	if t <= 0.0 {
-		return 0.0, false
-	}
-
-	return t, true
-}
-
 var buffer_val float64 = .00001
 func in_buffer(val float64) float64{
 	if val < buffer_val {
 		val = 0.0
 	}
 	return val
-}
-
-func (s *sphere) intersected(c_ray *ray) (float64, bool)  {
-	a := c_ray.direction.x * c_ray.direction.x +
-		c_ray.direction.y * c_ray.direction.y +
-		c_ray.direction.z * c_ray.direction.z
-	b := 2.0*((c_ray.start.x-s.center.x)*c_ray.direction.x +
-		(c_ray.start.y-s.center.y)*c_ray.direction.y +
-		(c_ray.start.z-s.center.z)*c_ray.direction.z) 
-	c := (c_ray.start.x-s.center.x) * (c_ray.start.x-s.center.x) +
-		(c_ray.start.y-s.center.y) * (c_ray.start.y-s.center.y) +
-		(c_ray.start.z-s.center.z) * (c_ray.start.z-s.center.z) -
-		s.radius * s.radius
-
-	is_hit:=false
-	i_test:=b*b-4.0*a*c
-	t1,t2,t_closest:=0.0,0.0,0.0
-	if i_test >= 0.0 {
-		is_hit=true
-		t1=(-b+math.Sqrt(i_test))/(2.0*a)
-		t2=(-b-math.Sqrt(i_test))/(2.0*a)
-		t1=in_buffer(t1)
-		t2=in_buffer(t2)
-		if t1 <= 0.0 && t2 <= 0.0 {
-			is_hit=false  // it hit behind or on the viewer
-		}else if t1 > 0.0 && t2 > 0.0 {
-			if t1<t2 {
-				t_closest=t1
-			}else{
-				t_closest=t2
-			}
-		} else if t1 > 0.0 {
-			t_closest = t1
-		} else if t2 > 0.0 {
-			t_closest = t2
-		}
-	}
-	
-	return t_closest, is_hit
-}
-
-func (v *vector) sub(v1 *vector) vector {
-	return vector{v.x-v1.x, v.y-v1.y, v.z-v1.z}
-} 
-
-func (v *vector) add(v1 *vector) vector {
-	return vector{v.x+v1.x, v.y+v1.y, v.z+v1.z}
-}
-
-func (v *vector) scalarMult (c float64) vector {
-	return vector{c * v.x, c * v.y, c * v.z}
-}
-
-func (v *vector) lengthSq() float64 {
-	return v.x * v.x  + v.y * v.y + v.z * v.z
-}
-
-func (v *vector) length() float64 {
-	return math.Sqrt(v.lengthSq())
-}
-
-func (v *vector) unit() vector {
-	l := v.length()
-	return vector{v.x/l, v.y/l, v.z/l}
-}
-
-func (v *vector) dot(v1 *vector) float64 {
-	return v.x * v1.x + v.y * v1.y + v.z * v1.z
-}
-
-func (v1 *vector) cross(v2 *vector) vector {
-	return vector{v1.y * v2.z - v2.y * v1.z,
-		v2.x * v1.z - v1.x * v2.z,
-		v1.x * v2.y - v2.x * v1.y}
 }
 
 func ceiling(value float64, top_value float64) float64{
