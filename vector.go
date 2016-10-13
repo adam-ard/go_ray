@@ -10,19 +10,19 @@ type vector struct {
 }
 
 func (v *vector) sub(v1 *vector) vector {
-	return vector{v.x-v1.x, v.y-v1.y, v.z-v1.z}
-} 
-
-func (v *vector) add(v1 *vector) vector {
-	return vector{v.x+v1.x, v.y+v1.y, v.z+v1.z}
+	return vector{v.x - v1.x, v.y - v1.y, v.z - v1.z}
 }
 
-func (v *vector) scalarMult (c float64) vector {
+func (v *vector) add(v1 *vector) vector {
+	return vector{v.x + v1.x, v.y + v1.y, v.z + v1.z}
+}
+
+func (v *vector) scalarMult(c float64) vector {
 	return vector{c * v.x, c * v.y, c * v.z}
 }
 
 func (v *vector) lengthSq() float64 {
-	return v.x * v.x  + v.y * v.y + v.z * v.z
+	return v.x*v.x + v.y*v.y + v.z*v.z
 }
 
 func (v *vector) length() float64 {
@@ -31,15 +31,15 @@ func (v *vector) length() float64 {
 
 func (v *vector) unit() vector {
 	l := v.length()
-	return vector{v.x/l, v.y/l, v.z/l}
+	return vector{v.x / l, v.y / l, v.z / l}
 }
 
 func (v *vector) dot(v1 *vector) float64 {
-	return v.x * v1.x + v.y * v1.y + v.z * v1.z
+	return v.x*v1.x + v.y*v1.y + v.z*v1.z
 }
 
 func (v1 *vector) cross(v2 *vector) vector {
-	return vector{v1.y * v2.z - v2.y * v1.z,
-		v2.x * v1.z - v1.x * v2.z,
-		v1.x * v2.y - v2.x * v1.y}
+	return vector{v1.y*v2.z - v2.y*v1.z,
+		v2.x*v1.z - v1.x*v2.z,
+		v1.x*v2.y - v2.x*v1.y}
 }

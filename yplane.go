@@ -2,10 +2,10 @@ package main
 
 type yplane struct {
 	loc, reflectiveness float64
-	red,green,blue float64
+	red, green, blue    float64
 }
 
-func (y *yplane) getReflectiveness() (float64) {
+func (y *yplane) getReflectiveness() float64 {
 	return y.reflectiveness
 }
 
@@ -13,11 +13,11 @@ func (y *yplane) getColorRaw() (float64, float64, float64) {
 	return y.red, y.green, y.blue
 }
 
-func (y *yplane) getUnitNormal(point *vector) (*vector) {
+func (y *yplane) getUnitNormal(point *vector) *vector {
 	return &vector{0.0, 1.0, 0.0}
 }
 
-func (y *yplane) intersected(c_ray *ray) (float64, bool)  {
+func (y *yplane) intersected(c_ray *ray) (float64, bool) {
 	if c_ray.direction.y == 0.0 {
 		return 0.0, false
 	}
@@ -30,4 +30,3 @@ func (y *yplane) intersected(c_ray *ray) (float64, bool)  {
 
 	return t, true
 }
-
