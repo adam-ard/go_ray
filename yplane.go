@@ -18,11 +18,11 @@ func (y *yplane) getUnitNormal(point *vector) *vector {
 }
 
 func (y *yplane) intersected(c_ray *ray) (float64, bool) {
-	if c_ray.direction.y == 0.0 {
+	if c_ray.direction.Y == 0.0 {
 		return 0.0, false
 	}
 
-	t := (y.loc - c_ray.start.y) / c_ray.direction.y
+	t := (y.loc - c_ray.start.Y) / c_ray.direction.Y
 	t = in_buffer(t)
 	if t <= 0.0 {
 		return 0.0, false

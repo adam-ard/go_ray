@@ -6,23 +6,25 @@ import "math"
 //  a vector from the origin to a point or 'absolute position vector'.
 //  otherwise it represents a 'relative position vector'
 type vector struct {
-	x, y, z float64
+	X float64 `json:"x"`
+	Y float64 `json:"y"`
+	Z float64 `json:"z"`
 }
 
 func (v *vector) sub(v1 *vector) vector {
-	return vector{v.x - v1.x, v.y - v1.y, v.z - v1.z}
+	return vector{v.X - v1.X, v.Y - v1.Y, v.Z - v1.Z}
 }
 
 func (v *vector) add(v1 *vector) vector {
-	return vector{v.x + v1.x, v.y + v1.y, v.z + v1.z}
+	return vector{v.X + v1.X, v.Y + v1.Y, v.Z + v1.Z}
 }
 
 func (v *vector) scalarMult(c float64) vector {
-	return vector{c * v.x, c * v.y, c * v.z}
+	return vector{c * v.X, c * v.Y, c * v.Z}
 }
 
 func (v *vector) lengthSq() float64 {
-	return v.x*v.x + v.y*v.y + v.z*v.z
+	return v.X*v.X + v.Y*v.Y + v.Z*v.Z
 }
 
 func (v *vector) length() float64 {
@@ -31,15 +33,15 @@ func (v *vector) length() float64 {
 
 func (v *vector) unit() vector {
 	l := v.length()
-	return vector{v.x / l, v.y / l, v.z / l}
+	return vector{v.X / l, v.Y / l, v.Z / l}
 }
 
 func (v *vector) dot(v1 *vector) float64 {
-	return v.x*v1.x + v.y*v1.y + v.z*v1.z
+	return v.X*v1.X + v.Y*v1.Y + v.Z*v1.Z
 }
 
 func (v1 *vector) cross(v2 *vector) vector {
-	return vector{v1.y*v2.z - v2.y*v1.z,
-		v2.x*v1.z - v1.x*v2.z,
-		v1.x*v2.y - v2.x*v1.y}
+	return vector{v1.Y*v2.Z - v2.Y*v1.Z,
+		v2.X*v1.Z - v1.X*v2.Z,
+		v1.X*v2.Y - v2.X*v1.Y}
 }

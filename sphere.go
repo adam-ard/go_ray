@@ -23,15 +23,15 @@ func (s *sphere) getUnitNormal(point *vector) *vector {
 }
 
 func (s *sphere) intersected(c_ray *ray) (float64, bool) {
-	a := c_ray.direction.x*c_ray.direction.x +
-		c_ray.direction.y*c_ray.direction.y +
-		c_ray.direction.z*c_ray.direction.z
-	b := 2.0 * ((c_ray.start.x-s.center.x)*c_ray.direction.x +
-		(c_ray.start.y-s.center.y)*c_ray.direction.y +
-		(c_ray.start.z-s.center.z)*c_ray.direction.z)
-	c := (c_ray.start.x-s.center.x)*(c_ray.start.x-s.center.x) +
-		(c_ray.start.y-s.center.y)*(c_ray.start.y-s.center.y) +
-		(c_ray.start.z-s.center.z)*(c_ray.start.z-s.center.z) -
+	a := c_ray.direction.X*c_ray.direction.X +
+		c_ray.direction.Y*c_ray.direction.Y +
+		c_ray.direction.Z*c_ray.direction.Z
+	b := 2.0 * ((c_ray.start.X-s.center.X)*c_ray.direction.X +
+		(c_ray.start.Y-s.center.Y)*c_ray.direction.Y +
+		(c_ray.start.Z-s.center.Z)*c_ray.direction.Z)
+	c := (c_ray.start.X-s.center.X)*(c_ray.start.X-s.center.X) +
+		(c_ray.start.Y-s.center.Y)*(c_ray.start.Y-s.center.Y) +
+		(c_ray.start.Z-s.center.Z)*(c_ray.start.Z-s.center.Z) -
 		s.radius*s.radius
 
 	is_hit := false
