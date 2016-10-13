@@ -16,7 +16,7 @@ type ray struct {
 }
 
 type scene struct {
-	items []sceneItem
+	items []sceneItem `json:"items"`
 }
 
 type sceneItem interface {
@@ -25,6 +25,8 @@ type sceneItem interface {
 	getColorRaw() (float64, float64, float64)
 	getUnitNormal(point *vector) *vector
 }
+
+var g_scene_desc scene_desc
 
 func (the_scene *scene) getColor(c_ray *ray, light *vector, ambient float64) (float64, float64, float64) {
 	t_closest := 0.0
@@ -121,17 +123,16 @@ func get_local_coordinate_system(eye, look_at, up *vector) (*vector, *vector) {
 }
 
 func get_scene() *scene {
-	s := sphere{vector{-25.0, 10.0, -20.0}, 10.0, 0.25, 0, 0, 0.75}
-	s2 := sphere{vector{5.0, 15.0, 15.0}, 15.0, 0.25, 0, 0.75, 0}
-	s3 := sphere{vector{5.0, 15.0, -15.0}, 15.0, 0.25, 0.75, 0, 0}
-	y := yplane{0.0, 0.70, 1.0, 1.0, 1.0}
-	the_scene := new(scene)
-	the_scene.items = make([]sceneItem, 4)
-	the_scene.items[0] = &s
-	the_scene.items[1] = &s2
-	the_scene.items[2] = &s3
-	the_scene.items[3] = &y
-	return the_scene
+	the_scene := scene{}
+	for _, v := range g_scene_desc.YPlanes {
+		new_v := v
+		the_scene.items = append(the_scene.items, &new_v)
+	}
+	for _, v := range g_scene_desc.Spheres {
+		new_v := v
+		the_scene.items = append(the_scene.items, &new_v)
+	}
+	return &the_scene
 }
 
 func get_current_ray(i, j int, the_screen *screen, u, v, look_at, eye *vector) *ray {
@@ -162,18 +163,11 @@ func main() {
 		os.Exit(-1)
 	}
 
-	g_scene_desc := scene_desc{}
+	g_scene_desc = scene_desc{}
 	if err := json.Unmarshal(scene, &g_scene_desc); err != nil {
 		fmt.Printf("Problem parsing scene file: %s", err.Error())
 		os.Exit(-1)
 	}
-
-	fmt.Println(g_scene_desc)
-
-	//g_scene_desc.Screen = screen{100, 100, 1000, 1000}
-	//g_scene_desc.Camera = camera{vector{-100, 50, 50}, vector{5, 15, -15}, vector{0, 1, 0}}
-	//g_scene_desc.Light = vector{0.0, 100.0, 100.0}
-	//g_scene_desc.AmbientLight = 0.2
 
 	f, err := os.OpenFile("x.png", os.O_CREATE|os.O_WRONLY, 0666)
 	if err != nil {

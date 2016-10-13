@@ -3,21 +3,24 @@ package main
 import "math"
 
 type sphere struct {
-	center                 vector
-	radius, reflectiveness float64
-	red, green, blue       float64
+	Center         vector  `json:"center"`
+	Radius         float64 `json:"radius"`
+	Reflectiveness float64 `json:"reflectiveness"`
+	Red            float64 `json:"red"`
+	Green          float64 `json:"green"`
+	Blue           float64 `json:"blue"`
 }
 
 func (s *sphere) getReflectiveness() float64 {
-	return s.reflectiveness
+	return s.Reflectiveness
 }
 
 func (s *sphere) getColorRaw() (float64, float64, float64) {
-	return s.red, s.green, s.blue
+	return s.Red, s.Green, s.Blue
 }
 
 func (s *sphere) getUnitNormal(point *vector) *vector {
-	normal := point.sub(&s.center)
+	normal := point.sub(&s.Center)
 	unormal := normal.unit()
 	return &unormal
 }
@@ -26,13 +29,13 @@ func (s *sphere) intersected(c_ray *ray) (float64, bool) {
 	a := c_ray.direction.X*c_ray.direction.X +
 		c_ray.direction.Y*c_ray.direction.Y +
 		c_ray.direction.Z*c_ray.direction.Z
-	b := 2.0 * ((c_ray.start.X-s.center.X)*c_ray.direction.X +
-		(c_ray.start.Y-s.center.Y)*c_ray.direction.Y +
-		(c_ray.start.Z-s.center.Z)*c_ray.direction.Z)
-	c := (c_ray.start.X-s.center.X)*(c_ray.start.X-s.center.X) +
-		(c_ray.start.Y-s.center.Y)*(c_ray.start.Y-s.center.Y) +
-		(c_ray.start.Z-s.center.Z)*(c_ray.start.Z-s.center.Z) -
-		s.radius*s.radius
+	b := 2.0 * ((c_ray.start.X-s.Center.X)*c_ray.direction.X +
+		(c_ray.start.Y-s.Center.Y)*c_ray.direction.Y +
+		(c_ray.start.Z-s.Center.Z)*c_ray.direction.Z)
+	c := (c_ray.start.X-s.Center.X)*(c_ray.start.X-s.Center.X) +
+		(c_ray.start.Y-s.Center.Y)*(c_ray.start.Y-s.Center.Y) +
+		(c_ray.start.Z-s.Center.Z)*(c_ray.start.Z-s.Center.Z) -
+		s.Radius*s.Radius
 
 	is_hit := false
 	i_test := b*b - 4.0*a*c

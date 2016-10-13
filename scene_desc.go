@@ -14,8 +14,10 @@ type screen struct {
 }
 
 type scene_desc struct {
-	Screen       screen  `json:"screen"`
-	Camera       camera  `json:"camera"`
-	Light        vector  `json:"light"`
-	AmbientLight float64 `json:"ambient_light"`
+	Screen       screen   `json:"screen"`
+	Camera       camera   `json:"camera"`
+	Light        vector   `json:"light"`
+	AmbientLight float64  `json:"ambient_light"`
+	YPlanes      []yplane `json:"yplanes"`
+	Spheres      []sphere `json:"spheres"`
 }
