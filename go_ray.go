@@ -3,12 +3,19 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/go-gl/gl/v2.1/gl"
+	"github.com/go-gl/glfw/v3.2/glfw"
 	"image"
 	"image/color"
 	"image/png"
 	"io/ioutil"
+	"log"
 	"os"
+	"runtime"
 )
+
+var g_scene_desc scene_desc
+var the_scene *scene
 
 type ray struct {
 	start     vector
@@ -26,7 +33,134 @@ type sceneItem interface {
 	getUnitNormal(point *vector) *vector
 }
 
-var g_scene_desc scene_desc
+func init() {
+	// GLFW event handling must run on the main OS thread
+	runtime.LockOSThread()
+}
+
+func main() {
+	scene, err := ReadFile("scene.json")
+	if err != nil {
+		fmt.Printf("Problem reading scene file: %s\n", err.Error())
+		os.Exit(-1)
+	}
+
+	g_scene_desc = scene_desc{}
+	if err := json.Unmarshal(scene, &g_scene_desc); err != nil {
+		fmt.Printf("Problem parsing scene file: %s\n", err.Error())
+		os.Exit(-1)
+	}
+	trace("x.png")
+
+	if err := glfw.Init(); err != nil {
+		log.Fatalln("failed to initialize glfw:", err)
+	}
+	defer glfw.Terminate()
+
+	glfw.WindowHint(glfw.Resizable, glfw.False)
+	glfw.WindowHint(glfw.ContextVersionMajor, 2)
+	glfw.WindowHint(glfw.ContextVersionMinor, 1)
+	window, err := glfw.CreateWindow(800, 600, "Raytracer", nil, nil)
+	if err != nil {
+		panic(err)
+	}
+	window.MakeContextCurrent()
+
+	if err := gl.Init(); err != nil {
+		panic(err)
+	}
+
+	setupScene()
+	for !window.ShouldClose() {
+		drawScene()
+		window.SwapBuffers()
+		glfw.PollEvents()
+	}
+}
+
+func setupScene() {
+	gl.Enable(gl.DEPTH_TEST)
+	gl.Enable(gl.LIGHTING)
+
+	gl.ClearColor(0.0, 0.0, 0.0, 0.0)
+	gl.ClearDepth(1)
+	gl.DepthFunc(gl.LEQUAL)
+
+	ambient_val := float32(g_scene_desc.AmbientLight)
+	ambient := []float32{ambient_val, ambient_val, ambient_val, 1}
+	diffuse := []float32{1, 1, 1, 1}
+
+	light_pos := g_scene_desc.Light
+	lightPosition := []float32{float32(light_pos.X), float32(light_pos.Y), float32(light_pos.Z), 0}
+	gl.Lightfv(gl.LIGHT0, gl.AMBIENT, &ambient[0])
+	gl.Lightfv(gl.LIGHT0, gl.DIFFUSE, &diffuse[0])
+	gl.Lightfv(gl.LIGHT0, gl.POSITION, &lightPosition[0])
+	gl.Enable(gl.LIGHT0)
+
+	gl.MatrixMode(gl.PROJECTION)
+	gl.LoadIdentity()
+	gl.Frustum(-1, 1, -1, 1, 1.0, 10.0)
+	gl.MatrixMode(gl.MODELVIEW)
+	gl.LoadIdentity()
+}
+
+//gl.Rotatef(rotationX, 1, 0, 0)
+//gl.Rotatef(rotationY, 0, 1, 0)
+
+func drawScene() {
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+	gl.MatrixMode(gl.MODELVIEW)
+	gl.LoadIdentity()
+
+	for _, v := range g_scene_desc.Spheres {
+		//gl.Translatef(0, 0, -3.0)
+
+		gl.Translatef(float32(v.Center.X), float32(v.Center.Y), float32(v.Center.Z))
+		gl.Color3f(float32(v.Red), float32(v.Green), float32(v.Blue))
+
+		fmt.Printf("%f:%f:%f\n", float32(v.Red), float32(v.Green), float32(v.Blue))
+
+		gl.Begin(gl.QUADS)
+		gl.Normal3f(0, 0, 1)
+		gl.Vertex3f(-1, -1, 1)
+		gl.Vertex3f(1, -1, 1)
+		gl.Vertex3f(1, 1, 1)
+		gl.Vertex3f(-1, 1, 1)
+
+		gl.Normal3f(0, 0, -1)
+		gl.Vertex3f(-1, -1, -1)
+		gl.Vertex3f(-1, 1, -1)
+		gl.Vertex3f(1, 1, -1)
+		gl.Vertex3f(1, -1, -1)
+
+		gl.Normal3f(0, 1, 0)
+		gl.Vertex3f(-1, 1, -1)
+		gl.Vertex3f(-1, 1, 1)
+		gl.Vertex3f(1, 1, 1)
+		gl.Vertex3f(1, 1, -1)
+
+		gl.Normal3f(0, -1, 0)
+		gl.Vertex3f(-1, -1, -1)
+		gl.Vertex3f(1, -1, -1)
+		gl.Vertex3f(1, -1, 1)
+		gl.Vertex3f(-1, -1, 1)
+
+		gl.Normal3f(1, 0, 0)
+		gl.Vertex3f(1, -1, -1)
+		gl.Vertex3f(1, 1, -1)
+		gl.Vertex3f(1, 1, 1)
+		gl.Vertex3f(1, -1, 1)
+
+		gl.Normal3f(-1, 0, 0)
+		gl.Vertex3f(-1, -1, -1)
+		gl.Vertex3f(-1, -1, 1)
+		gl.Vertex3f(-1, 1, 1)
+		gl.Vertex3f(-1, 1, -1)
+		gl.End()
+		gl.Translatef(float32(-v.Center.X), float32(-v.Center.Y), float32(-v.Center.Z))
+	}
+
+}
 
 func (the_scene *scene) getColor(c_ray *ray, light *vector, ambient float64) (float64, float64, float64) {
 	t_closest := 0.0
@@ -156,20 +290,12 @@ func ReadFile(filename string) ([]byte, error) {
 	return ioutil.ReadAll(f)
 }
 
-func main() {
-	scene, err := ReadFile("scene.json")
-	if err != nil {
-		fmt.Printf("Problem reading scene file: %s", err.Error())
-		os.Exit(-1)
-	}
+//func main() {
+//	trace("scene.png", "x.png")
+//}
 
-	g_scene_desc = scene_desc{}
-	if err := json.Unmarshal(scene, &g_scene_desc); err != nil {
-		fmt.Printf("Problem parsing scene file: %s", err.Error())
-		os.Exit(-1)
-	}
-
-	f, err := os.OpenFile("x.png", os.O_CREATE|os.O_WRONLY, 0666)
+func trace(targetFile string) {
+	f, err := os.OpenFile(targetFile, os.O_CREATE|os.O_WRONLY, 0666)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)

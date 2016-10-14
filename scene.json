@@ -13,36 +13,36 @@
 		"up":{"x":0.0,"y":1.0,"z":0.0}
 	},
 	"light": {"x":0.0,"y":100.0,"z":100.0},
-	"ambient_light":0.5,
+	"ambient_light":0.7,
 	"yplanes": [
 		{
-			"loc":0.0,"reflectiveness":0.7, "red":1.0,"green":1.0,"blue":1.0
+			"loc":0.0,"reflectiveness":0.5, "red":1.0,"green":1.0,"blue":1.0
 		}
 	],
 	"spheres": [
 		{
-			"center":{"x":-25.0,"y":10.0,"z":-20.0}, 
-			"radius":10.0,
-			"reflectiveness":0.25, 
+			"center":{"x":-1.0,"y":1.0,"z":-3.0}, 
+			"radius":1.0,
+			"reflectiveness":0.5, 
 			"red":0.0,
 			"green":0.0,
 			"blue":0.75
 		},
 		{
-			"center":{"x":5.0,"y":15.0,"z":15.0}, 
-			"radius":15.0,
-			"reflectiveness":0.25, 
+			"center":{"x":1.0,"y":0.0,"z":-3.0}, 
+			"radius":1.0,
+			"reflectiveness":0.5, 
 			"red":0.0,
-			"green":0.75,
-			"blue":0.0
+			"green":0.0,
+			"blue":0.75
 		},
 		{
-			"center":{"x":5.0,"y":15.0,"z":-15.0}, 
-			"radius":15.0,
-			"reflectiveness":0.25, 
-			"red":0.75,
+			"center":{"x":-1.0,"y":-1.0,"z":-3.0}, 
+			"radius":1.0,
+			"reflectiveness":0.5, 
+			"red":0.0,
 			"green":0.0,
-			"blue":0.0
+			"blue":0.75
 		}
 	]
 }
