@@ -10,6 +10,7 @@ import (
 	"image/png"
 	"io/ioutil"
 	"log"
+	"math"
 	"os"
 	"runtime"
 )
@@ -130,8 +131,30 @@ func setupScene() {
 	gl.LoadIdentity()
 }
 
-//gl.Rotatef(rotationX, 1, 0, 0)
-//gl.Rotatef(rotationY, 0, 1, 0)
+func drawSphere(radius float32, lats, longs int) {
+	for i := 0; i <= lats; i++ {
+		lat0 := 3.141459 * (-0.5 + (float32(i) - 1.0/float32(lats)))
+		z0 := math.Sin(float64(lat0))
+		zr0 := math.Cos(float64(lat0))
+
+		lat1 := 3.141459 * (-0.5 + (float32(i) / float32(lats)))
+		z1 := math.Sin(float64(lat1))
+		zr1 := math.Cos(float64(lat1))
+
+		gl.Begin(gl.QUAD_STRIP)
+		for j := 0; j <= longs; j++ {
+			lng := 2.0 * 3.141459 * (float32(j) - 1.0) / float32(longs)
+			x := math.Cos(float64(lng))
+			y := math.Sin(float64(lng))
+
+			gl.Normal3f(float32(x*zr0), float32(y*zr0), float32(z0))
+			gl.Vertex3f(float32(x*zr0), float32(y*zr0), float32(z0))
+			gl.Normal3f(float32(x*zr1), float32(y*zr1), float32(z1))
+			gl.Vertex3f(float32(x*zr1), float32(y*zr1), float32(z1))
+		}
+		gl.End()
+	}
+}
 
 func drawScene() {
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
@@ -146,43 +169,45 @@ func drawScene() {
 		gl.Translatef(float32(v.Center.X), float32(v.Center.Y), float32(v.Center.Z))
 		gl.Color3f(float32(v.Red), float32(v.Green), float32(v.Blue))
 
-		gl.Begin(gl.QUADS)
-		gl.Normal3f(0, 0, 1)
-		gl.Vertex3f(-1, -1, 1)
-		gl.Vertex3f(1, -1, 1)
-		gl.Vertex3f(1, 1, 1)
-		gl.Vertex3f(-1, 1, 1)
+		drawSphere(0.5, 20, 20)
 
-		gl.Normal3f(0, 0, -1)
-		gl.Vertex3f(-1, -1, -1)
-		gl.Vertex3f(-1, 1, -1)
-		gl.Vertex3f(1, 1, -1)
-		gl.Vertex3f(1, -1, -1)
+		//		gl.Begin(gl.QUADS)
+		//		gl.Normal3f(0, 0, 1)
+		//		gl.Vertex3f(-1, -1, 1)
+		//		gl.Vertex3f(1, -1, 1)
+		//		gl.Vertex3f(1, 1, 1)
+		//		gl.Vertex3f(-1, 1, 1)
+		//
+		//		gl.Normal3f(0, 0, -1)
+		//		gl.Vertex3f(-1, -1, -1)
+		//		gl.Vertex3f(-1, 1, -1)
+		//		gl.Vertex3f(1, 1, -1)
+		//		gl.Vertex3f(1, -1, -1)
+		//
+		//		gl.Normal3f(0, 1, 0)
+		//		gl.Vertex3f(-1, 1, -1)
+		//		gl.Vertex3f(-1, 1, 1)
+		//		gl.Vertex3f(1, 1, 1)
+		//		gl.Vertex3f(1, 1, -1)
+		//
+		//		gl.Normal3f(0, -1, 0)
+		//		gl.Vertex3f(-1, -1, -1)
+		//		gl.Vertex3f(1, -1, -1)
+		//		gl.Vertex3f(1, -1, 1)
+		//		gl.Vertex3f(-1, -1, 1)
 
-		gl.Normal3f(0, 1, 0)
-		gl.Vertex3f(-1, 1, -1)
-		gl.Vertex3f(-1, 1, 1)
-		gl.Vertex3f(1, 1, 1)
-		gl.Vertex3f(1, 1, -1)
-
-		gl.Normal3f(0, -1, 0)
-		gl.Vertex3f(-1, -1, -1)
-		gl.Vertex3f(1, -1, -1)
-		gl.Vertex3f(1, -1, 1)
-		gl.Vertex3f(-1, -1, 1)
-
-		gl.Normal3f(1, 0, 0)
-		gl.Vertex3f(1, -1, -1)
-		gl.Vertex3f(1, 1, -1)
-		gl.Vertex3f(1, 1, 1)
-		gl.Vertex3f(1, -1, 1)
-
-		gl.Normal3f(-1, 0, 0)
-		gl.Vertex3f(-1, -1, -1)
-		gl.Vertex3f(-1, -1, 1)
-		gl.Vertex3f(-1, 1, 1)
-		gl.Vertex3f(-1, 1, -1)
-		gl.End()
+		//		gl.Normal3f(1, 0, 0)
+		//		gl.Vertex3f(1, -1, -1)
+		//		gl.Vertex3f(1, 1, -1)
+		//		gl.Vertex3f(1, 1, 1)
+		//		gl.Vertex3f(1, -1, 1)
+		//
+		//		gl.Normal3f(-1, 0, 0)
+		//		gl.Vertex3f(-1, -1, -1)
+		//		gl.Vertex3f(-1, -1, 1)
+		//		gl.Vertex3f(-1, 1, 1)
+		//		gl.Vertex3f(-1, 1, -1)
+		//		gl.End()
 		gl.Translatef(float32(-v.Center.X), float32(-v.Center.Y), float32(-v.Center.Z))
 	}
 
