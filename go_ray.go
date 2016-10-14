@@ -90,7 +90,7 @@ func keyboard_callback(w *glfw.Window, key glfw.Key, scancode int, action glfw.A
 		translate_val = translate_val + 0.1
 	}
 	if key == glfw.KeyR && action == glfw.Repeat {
-		rotate_val = rotate_val + 0.1
+		rotate_val = rotate_val + 1.0
 	}
 	if key == glfw.KeyX && action == glfw.Repeat {
 		g_scene_desc.Spheres[0].Center.X = g_scene_desc.Spheres[0].Center.X + 0.1
@@ -169,7 +169,7 @@ func drawScene() {
 		gl.Translatef(float32(v.Center.X), float32(v.Center.Y), float32(v.Center.Z))
 		gl.Color3f(float32(v.Red), float32(v.Green), float32(v.Blue))
 
-		drawSphere(0.5, 20, 20)
+		drawSphere(0.5, 200, 200)
 
 		//		gl.Begin(gl.QUADS)
 		//		gl.Normal3f(0, 0, 1)
