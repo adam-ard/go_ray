@@ -21,6 +21,7 @@ var g_scene_desc scene_desc
 var the_scene *scene
 var translate_val float32
 var rotate_val float32
+var selection int
 
 type ray struct {
 	start     vector
@@ -46,6 +47,8 @@ func init() {
 func main() {
 	translate_val = 7.0
 	rotate_val = 5.0
+	selection = 0
+
 	scene, err := ReadFile("scene.json")
 	if err != nil {
 		fmt.Printf("Problem reading scene file: %s\n", err.Error())
@@ -87,21 +90,26 @@ func main() {
 }
 
 func keyboard_callback(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
-	//	fmt.Println(key, scancode, action, mods)
+	fmt.Println(key, action, mods)
+	fmt.Println(glfw.KeyX, glfw.Repeat, glfw.ModShift)
 	if key == glfw.KeyT && action == glfw.Press {
 		translate_val = translate_val + 0.1
 	}
 	if key == glfw.KeyR && action == glfw.Repeat {
 		rotate_val = rotate_val + 1.0
 	}
-	if key == glfw.KeyX && action == glfw.Repeat {
-		g_scene_desc.Spheres[0].Center.X = g_scene_desc.Spheres[0].Center.X + 0.1
-	}
-	if key == glfw.KeyY && action == glfw.Repeat {
-		g_scene_desc.Spheres[0].Center.Y = g_scene_desc.Spheres[0].Center.Y + 0.1
-	}
-	if key == glfw.KeyD && action == glfw.Press {
+	if key == glfw.KeyX && action == glfw.Repeat && mods == glfw.ModShift {
+		g_scene_desc.Spheres[selection].Center.X = g_scene_desc.Spheres[selection].Center.X - 0.1
+	} else if key == glfw.KeyX && action == glfw.Repeat {
+		g_scene_desc.Spheres[selection].Center.X = g_scene_desc.Spheres[selection].Center.X + 0.1
+	} else if key == glfw.KeyY && action == glfw.Repeat && mods == glfw.ModShift {
+		g_scene_desc.Spheres[selection].Center.Y = g_scene_desc.Spheres[selection].Center.Y - 0.1
+	} else if key == glfw.KeyY && action == glfw.Repeat {
+		g_scene_desc.Spheres[selection].Center.Y = g_scene_desc.Spheres[selection].Center.Y + 0.1
+	} else if key == glfw.KeyD && action == glfw.Press {
 		trace("x.png")
+	} else if key == glfw.KeyS && action == glfw.Press {
+		selection = (selection + 1) % len(g_scene_desc.Spheres)
 	}
 }
 
