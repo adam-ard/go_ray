@@ -15,6 +15,8 @@ import (
 	"runtime"
 )
 
+const PI = 3.14159
+
 var g_scene_desc scene_desc
 var the_scene *scene
 var translate_val float32
@@ -133,17 +135,17 @@ func setupScene() {
 
 func drawSphere(radius float32, lats, longs int) {
 	for i := 0; i <= lats; i++ {
-		lat0 := 3.141459 * (-0.5 + (float32(i) - 1.0/float32(lats)))
+		lat0 := PI * (-0.5 + (float32(i) - 1.0/float32(lats)))
 		z0 := math.Sin(float64(lat0))
 		zr0 := math.Cos(float64(lat0))
 
-		lat1 := 3.141459 * (-0.5 + (float32(i) / float32(lats)))
+		lat1 := PI * (-0.5 + (float32(i) / float32(lats)))
 		z1 := math.Sin(float64(lat1))
 		zr1 := math.Cos(float64(lat1))
 
 		gl.Begin(gl.QUAD_STRIP)
 		for j := 0; j <= longs; j++ {
-			lng := 2.0 * 3.141459 * (float32(j) - 1.0) / float32(longs)
+			lng := 2.0 * PI * (float32(j) - 1.0) / float32(longs)
 			x := math.Cos(float64(lng))
 			y := math.Sin(float64(lng))
 
