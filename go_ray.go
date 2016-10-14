@@ -16,6 +16,8 @@ import (
 
 var g_scene_desc scene_desc
 var the_scene *scene
+var translate_val float32
+var rotate_val float32
 
 type ray struct {
 	start     vector
@@ -39,6 +41,8 @@ func init() {
 }
 
 func main() {
+	translate_val = 7.0
+	rotate_val = 5.0
 	scene, err := ReadFile("scene.json")
 	if err != nil {
 		fmt.Printf("Problem reading scene file: %s\n", err.Error())
@@ -70,6 +74,8 @@ func main() {
 		panic(err)
 	}
 
+	window.SetKeyCallback(keyboard_callback)
+
 	setupScene()
 	for !window.ShouldClose() {
 		drawScene()
@@ -78,9 +84,21 @@ func main() {
 	}
 }
 
+func keyboard_callback(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
+	//	fmt.Println(key, scancode, action, mods)
+	if key == glfw.KeyT && action == glfw.Press {
+		translate_val = translate_val + 0.1
+	}
+	if key == glfw.KeyR && action == glfw.Repeat {
+		rotate_val = rotate_val + 0.1
+	}
+}
+
 func setupScene() {
 	gl.Enable(gl.DEPTH_TEST)
 	gl.Enable(gl.LIGHTING)
+	gl.ColorMaterial(gl.FRONT_AND_BACK, gl.AMBIENT_AND_DIFFUSE)
+	gl.Enable(gl.COLOR_MATERIAL)
 
 	gl.ClearColor(0.0, 0.0, 0.0, 0.0)
 	gl.ClearDepth(1)
@@ -112,13 +130,13 @@ func drawScene() {
 	gl.MatrixMode(gl.MODELVIEW)
 	gl.LoadIdentity()
 
+	gl.Translatef(0, 0, -translate_val)
+	gl.Rotatef(rotate_val, 1, 0, 0)
+	gl.Rotatef(rotate_val, 0, 1, 0)
 	for _, v := range g_scene_desc.Spheres {
-		//gl.Translatef(0, 0, -3.0)
 
 		gl.Translatef(float32(v.Center.X), float32(v.Center.Y), float32(v.Center.Z))
 		gl.Color3f(float32(v.Red), float32(v.Green), float32(v.Blue))
-
-		fmt.Printf("%f:%f:%f\n", float32(v.Red), float32(v.Green), float32(v.Blue))
 
 		gl.Begin(gl.QUADS)
 		gl.Normal3f(0, 0, 1)
